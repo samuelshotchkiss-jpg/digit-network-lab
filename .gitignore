@@ -1,0 +1,8 @@
+# Third-party clone of DFin's visualiser; only needed to regenerate app/samples.js
+dfin/
+
+# Local preview-server config
+.claude/
+
+.DS_Store
+Thumbs.db

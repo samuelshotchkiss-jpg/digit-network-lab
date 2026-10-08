@@ -1,0 +1,2230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digit Network Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,800&family=Lexend:wght@400;700&display=swap">
+<style>
+/* Layout: graph-paper ground; each level is a bench of pixel grids and panels, read left to right
+   from input to output. Blue = positive weight, orange = negative weight (colorblind-safe pair). */
+:root {
+  --paper: #eef1f5;
+  --paper-line: #dde3ea;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #586374;
+  --line: #cfd6df;
+  --plus: #2563c9;
+  --plus-soft: #dce7fa;
+  --minus: #d4701a;
+  --minus-soft: #fbe6d3;
+  --glow: #f4c430;
+  --glow-soft: #fdf3cf;
+  --good: #23824f;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --font-num: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif; /* plain zero, no slash */
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11151c; --paper-line: #1a2029; --surface: #191f28; --ink: #e7ebf1; --muted: #9aa4b3;
+    --line: #2d3644; --plus: #5e9bff; --plus-soft: #1c2b45; --minus: #f39a48; --minus-soft: #3a2816;
+    --glow: #ffd54a; --glow-soft: #3a3214; --good: #4cc17f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11151c; --paper-line: #1a2029; --surface: #191f28; --ink: #e7ebf1; --muted: #9aa4b3;
+  --line: #2d3644; --plus: #5e9bff; --plus-soft: #1c2b45; --minus: #f39a48; --minus-soft: #3a2816;
+  --glow: #ffd54a; --glow-soft: #3a3214; --good: #4cc17f; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--paper-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+  padding-inline: 16px;
+  padding-block: 0 48px;
+}
+.wrap { max-width: 1200px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-weight: 800; font-size: 2rem; letter-spacing: -0.01em; }
+h2 { font-weight: 800; font-size: 1.6rem; }
+h3 { font-weight: 600; font-size: 1.1rem; }
+p { margin: 0; max-width: 68ch; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.label { font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.note { font-size: 0.9rem; color: var(--muted); }
+.term { font-weight: 700; }
+button, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--plus); outline-offset: 2px; }
+
+/* Header + level tabs */
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; padding-block: 22px 14px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark { width: 40px; height: 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; flex: none; }
+.brand-mark span { background: var(--ink); border-radius: 2px; }
+.brand-mark span.o { background: transparent; }
+.brand p { color: var(--muted); font-size: 0.95rem; }
+nav.levels { display: flex; flex-wrap: wrap; gap: 6px; }
+nav.levels button {
+  border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 6px 14px; cursor: pointer; font-weight: 700; font-size: 0.92rem;
+}
+nav.levels button[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.intro { display: grid; gap: 8px; padding-block: 10px 18px; }
+.intro p { color: var(--muted); }
+
+.panel { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.btn {
+  border: 1.5px solid var(--ink); background: var(--surface); border-radius: 8px; padding: 7px 14px;
+  cursor: pointer; font-weight: 700; justify-self: start;
+}
+.btn.solid { background: var(--ink); color: var(--surface); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.stack { display: grid; gap: 14px; min-width: 0; align-content: start; }
+select { border: 1.5px solid var(--line); border-radius: 8px; padding: 6px 8px; background: var(--surface); }
+details.explain { font-size: 0.93rem; color: var(--muted); }
+details.explain summary { cursor: pointer; color: var(--ink); font-weight: 700; }
+details.explain p { margin-top: 6px; }
+
+/* Shared drawing pad */
+.padwrap { width: 100%; max-width: 320px; }
+canvas.pad { width: 100%; aspect-ratio: 1; display: block; touch-action: none; cursor: crosshair; border-radius: 6px; }
+.verdict-line { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.verdict-line .big { font-family: var(--font-display); font-weight: 800; font-size: 3rem; line-height: 1; }
+
+/* Probability / score bars, one row per digit */
+.bars { display: grid; gap: 3px; }
+.bars .b { display: grid; grid-template-columns: 1.2em 1fr 3.4em; gap: 8px; align-items: center; font-size: 0.9rem; }
+.bars .b .d { font-family: var(--font-num); font-weight: 600; text-align: center; }
+.bars .b .track { height: 12px; border-radius: 3px; background: var(--paper); overflow: hidden; }
+.bars .b .track i { display: block; height: 100%; width: 0; background: var(--muted); }
+.bars .b.top .track i { background: var(--glow); }
+.bars .b .v { text-align: right; color: var(--muted); }
+.bars .b.top .v { color: var(--ink); font-weight: 700; }
+
+.vocab dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 0.93rem; }
+.vocab dt { font-weight: 700; }
+.vocab dd { margin: 0; color: var(--muted); }
+
+/* ---------- Level 1 ---------- */
+.bench { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(190px, 0.9fr); gap: 14px; align-items: stretch; }
+.grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; touch-action: none; user-select: none; max-width: 260px; width: 100%; }
+.grid5 button {
+  aspect-ratio: 1; border: 1.5px solid var(--line); border-radius: 5px; background: var(--surface);
+  cursor: pointer; padding: 0; font-family: var(--font-num); font-size: 0.95rem; font-weight: 500;
+  display: grid; place-items: center;
+}
+.grid5.prefs button.p1 { background: var(--plus); border-color: var(--plus); color: var(--surface); }
+.grid5.prefs button.m1 { background: var(--minus); border-color: var(--minus); color: var(--surface); }
+.grid5.draw button.on { background: var(--ink); border-color: var(--ink); }
+.grid5.points button { cursor: default; color: var(--muted); }
+.grid5.points button.p1 { background: var(--plus-soft); color: var(--plus); border-color: var(--plus); font-weight: 700; }
+.grid5.points button.m1 { background: var(--minus-soft); color: var(--minus); border-color: var(--minus); font-weight: 700; }
+.grid5.points button.inked { border-color: var(--ink); }
+.tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.tool { border: 1.5px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 10px; cursor: pointer; font-weight: 700; font-size: 0.9rem; display: inline-flex; gap: 6px; align-items: center; }
+.tool[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.swatch { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid var(--line); display: inline-block; flex: none; }
+.swatch.p { background: var(--plus); border-color: var(--plus); }
+.swatch.m { background: var(--minus); border-color: var(--minus); }
+
+.verdict { display: grid; gap: 14px; align-content: start; }
+.bulb {
+  width: 92px; height: 92px; border-radius: 50%; border: 3px solid var(--line);
+  display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; text-align: center; line-height: 1.1;
+  color: var(--muted); background: var(--paper); transition: background .2s, box-shadow .2s, border-color .2s;
+}
+.bulb.lit { background: var(--glow); border-color: var(--glow); color: #2a2100; box-shadow: 0 0 0 8px var(--glow-soft), 0 0 36px var(--glow); }
+.scoreline .num { font-size: 2.2rem; line-height: 1; display: block; }
+.stepper { display: inline-flex; align-items: center; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; }
+.stepper button { border: 0; background: var(--paper); width: 34px; height: 34px; cursor: pointer; font-weight: 700; font-size: 1.1rem; }
+.stepper output { min-width: 38px; text-align: center; font-family: var(--font-num); font-size: 1.05rem; }
+
+.l1-lower { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; margin-top: 14px; }
+.testbench { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.specimen { border: 1.5px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface); cursor: pointer; display: grid; gap: 6px; justify-items: center; text-align: center; }
+.specimen.fires { border-color: var(--glow); background: var(--glow-soft); }
+.specimen canvas { width: 100%; max-width: 70px; aspect-ratio: 1; }
+.specimen .name { font-size: 0.8rem; line-height: 1.2; }
+.specimen .num { font-size: 0.85rem; color: var(--muted); }
+.specimen.fires .num { color: var(--ink); font-weight: 700; }
+
+ol.challenges { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: ch; }
+ol.challenges li { counter-increment: ch; display: grid; grid-template-columns: 30px 1fr; gap: 4px 10px; align-items: start; }
+ol.challenges li::before {
+  content: counter(ch); width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--line);
+  display: grid; place-items: center; font-family: var(--font-num); font-size: 0.9rem; color: var(--muted);
+}
+ol.challenges li.done::before { content: "✓"; background: var(--good); border-color: var(--good); color: var(--surface); }
+ol.challenges li.now .ctext { font-weight: 700; }
+ol.challenges details { grid-column: 2; font-size: 0.9rem; color: var(--muted); }
+ol.challenges summary { cursor: pointer; }
+ol.tries { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; font-size: 0.95rem; }
+
+/* ---------- Level 2 ---------- */
+.l2 { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 14px; align-items: start; }
+.digitbtns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.digitbtns button { border: 1.5px solid var(--ink); background: var(--surface); border-radius: 8px; padding: 6px 0; cursor: pointer; font-family: var(--font-num); font-size: 1.15rem; }
+.digitbtns button:hover { background: var(--ink); color: var(--surface); }
+.msg { min-height: 3em; font-size: 0.93rem; color: var(--muted); }
+
+.outputs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.det { border: 1.5px solid var(--line); border-radius: 8px; padding: 8px; background: var(--surface); cursor: pointer; display: grid; gap: 6px; text-align: left; }
+.det canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 4px; }
+.det .dhead { display: flex; justify-content: space-between; align-items: baseline; }
+.det .dname { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; line-height: 1; }
+.det .dscore { font-size: 0.8rem; color: var(--muted); }
+.det .bar { height: 8px; border-radius: 4px; background: var(--paper); overflow: hidden; }
+.det .bar i { display: block; height: 100%; width: 0; background: var(--muted); }
+.det.win { border-color: var(--glow); background: var(--glow-soft); }
+.det.win .bar i { background: var(--glow); }
+.det[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--ink); border-color: var(--ink); }
+
+.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.why figure { margin: 0; display: grid; gap: 4px; }
+.why canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 4px; }
+.why figcaption { font-size: 0.85rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+.studyrow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.stats { display: flex; gap: 22px; flex-wrap: wrap; }
+.stat .num { font-size: 1.6rem; display: block; line-height: 1.1; }
+.history { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-family: var(--font-num); font-size: 0.95rem; }
+.history .arrow { color: var(--muted); }
+.mistakes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.mistake { border: 1.5px solid var(--line); border-radius: 6px; padding: 4px; background: var(--surface); cursor: pointer; display: grid; gap: 2px; font-size: 0.75rem; text-align: center; color: var(--muted); }
+.mistake canvas { width: 100%; aspect-ratio: 1; display: block; }
+
+/* ---------- Level 3 ---------- */
+.l3 { display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(220px, 280px); gap: 14px; align-items: start; }
+.hidden16 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.hcell { border: 1.5px solid var(--line); border-radius: 8px; padding: 6px; background: var(--surface); display: grid; gap: 4px; cursor: pointer; text-align: left; }
+.hcell canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 3px; }
+.hcell .hhead { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
+.hcell .act { height: 7px; border-radius: 3px; background: var(--paper); overflow: hidden; }
+.hcell .act i { display: block; height: 100%; width: 0; background: var(--ink); }
+.hcell[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--ink); border-color: var(--ink); }
+canvas.matrix { width: 100%; display: block; }
+.trainrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+svg.chart { width: 100%; height: auto; display: block; }
+svg.chart text { fill: var(--muted); font: 11px var(--font-body); }
+svg.chart .gridl { stroke: var(--line); stroke-width: 1; }
+svg.chart .line { stroke: var(--plus); stroke-width: 2.5; fill: none; }
+svg.chart .area { fill: var(--plus-soft); }
+svg.chart .dot { fill: var(--plus); }
+svg.chart .ref { stroke: var(--minus); stroke-width: 1.5; stroke-dasharray: 5 4; }
+svg.chart .reftext { fill: var(--minus); }
+
+.sigpanel { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+svg.chart .stepl { stroke: var(--minus); stroke-width: 2; fill: none; stroke-dasharray: 6 4; }
+.bp-grid { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 20px; align-items: start; }
+.bp-input { margin: 0; display: grid; gap: 4px; }
+.bp-input canvas { width: 140px; height: 140px; border-radius: 4px; }
+#bp-tabs button { font-size: 0.82rem; }
+.dbars { display: grid; gap: 3px; }
+.dbars .r { display: grid; grid-template-columns: minmax(7em, max-content) minmax(80px, 1fr) 4.2em; gap: 10px; align-items: center; font-size: 0.86rem; border: 0; background: none; padding: 1px 0; text-align: left; }
+.dbars button.r { cursor: pointer; border-radius: 4px; }
+.dbars .r.sel { background: var(--glow-soft); }
+.dbars .track { position: relative; height: 12px; background: var(--paper); border-radius: 3px; }
+.dbars .track::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1.5px; background: var(--muted); }
+.dbars .track i { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.dbars .v { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.pick { display: flex; flex-wrap: wrap; gap: 4px; }
+.pick button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 6px; min-width: 2.2em; padding: 3px 6px; cursor: pointer; font-family: var(--font-num); }
+.pick button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+.why3 { display: grid; grid-template-columns: repeat(3, minmax(0, 150px)); gap: 10px; }
+.why3 figure { margin: 0; display: grid; gap: 4px; }
+.why3 canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 4px; }
+@media (max-width: 760px) { .sigpanel, .bp-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Start: neuron lab ---------- */
+ol.roadmap { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+.neuron-lab { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 6px; }
+#bio { width: 100%; height: auto; display: block; }
+#bio .up { cursor: pointer; }
+#bio text { font: 12px var(--font-body); fill: var(--muted); }
+#bio .uplabel { font: 800 18px var(--font-display); fill: var(--ink); }
+#bio .fire-pulse { stroke-dasharray: 10 14; animation: pulse 0.9s linear infinite; }
+@keyframes pulse { to { stroke-dashoffset: -24; } }
+.mathrows { display: grid; gap: 6px; }
+.mrow { display: grid; grid-template-columns: auto 3.6em auto auto auto 2.8em; gap: 8px; align-items: center; font-size: 0.95rem; }
+.mrow .tog { border: 1.5px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; background: var(--surface); font-weight: 700; min-width: 7.5em; text-align: left; }
+.mrow .tog[aria-pressed="true"] { background: var(--glow); border-color: var(--glow); color: #2a2100; }
+.mrow .stepper { justify-self: start; }
+.mrow .prod { text-align: right; font-family: var(--font-num); font-weight: 600; }
+.msum { border-top: 1.5px solid var(--line); padding-top: 6px; display: flex; justify-content: space-between; font-weight: 700; }
+.bulb.small { width: 70px; height: 70px; font-size: 0.9rem; }
+.neuron-lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 10px; border-top: 1.5px dashed var(--line); padding-top: 14px; }
+table.truth { border-collapse: collapse; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+table.truth th, table.truth td { padding: 3px 12px; text-align: center; border-bottom: 1px solid var(--line); }
+table.truth th { font-family: var(--font-body); font-size: 0.76rem; color: var(--muted); letter-spacing: 0.06em; }
+table.truth tr.cur td { background: var(--glow-soft); font-weight: 700; }
+table.truth td.on { color: var(--good); font-weight: 700; }
+ul.tries { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: 0.95rem; }
+
+/* ---------- Questions, ethics, report ---------- */
+.qpanel { margin-top: 14px; border-color: var(--ink); }
+.q { display: grid; gap: 6px; }
+.q label { font-weight: 700; }
+textarea.answer, input.textin { width: 100%; border: 1.5px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; background: var(--paper); color: var(--ink); resize: vertical; }
+textarea.answer:focus, input.textin:focus { border-color: var(--plus); outline: none; }
+.ethics-panel { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
+.bb-top { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; align-items: start; }
+#bb-img { width: 120px; height: 120px; border-radius: 4px; }
+#bb-params { width: 100%; aspect-ratio: 1; display: block; image-rendering: pixelated; border: 1.5px solid var(--line); border-radius: 4px; }
+.hw-results { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.hw-results figure { margin: 0; display: grid; gap: 2px; text-align: center; font-size: 0.75rem; }
+.hw-results canvas { width: 100%; aspect-ratio: 1; border: 1.5px solid var(--line); border-radius: 3px; }
+.hw-results figure.ok canvas { border-color: var(--good); }
+.hw-results figure.bad canvas { border-color: var(--minus); }
+ul.sources { margin: 0; padding-left: 1.2em; font-size: 0.85rem; color: var(--muted); display: grid; gap: 3px; }
+dl.results { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 0.95rem; }
+dl.results dt { color: var(--muted); }
+dl.results dd { margin: 0; font-weight: 700; }
+.ans { border-bottom: 1px solid var(--line); padding-bottom: 8px; display: grid; gap: 4px; }
+.ans .qt { font-weight: 700; font-size: 0.93rem; }
+.ans .at { white-space: pre-wrap; font-size: 0.93rem; }
+.ans .missing { color: var(--minus); font-size: 0.9rem; }
+@media (max-width: 860px) { .neuron-lab, .neuron-lower, .ethics-panel { grid-template-columns: 1fr; } }
+
+/* ---------- Level 4 ---------- */
+.l4 { display: grid; grid-template-columns: minmax(240px, 290px) minmax(0, 1fr); gap: 14px; align-items: start; }
+canvas.netview { width: 100%; height: 520px; display: block; cursor: pointer; }
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 5px 12px; cursor: pointer; font-weight: 700; font-size: 0.88rem; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+input[type="range"] { width: 100%; accent-color: var(--plus); }
+.timeline-meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 0.92rem; }
+.detail-grid { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: start; }
+.detail-grid canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 4px; }
+table.calc { border-collapse: collapse; font-size: 0.93rem; width: 100%; }
+table.calc td { padding: 3px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.calc td.num { text-align: right; padding-left: 12px; white-space: nowrap; }
+table.calc tr.total td { font-weight: 700; border-bottom: 0; }
+.l4-lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.tablewrap { overflow-x: auto; }
+table.scale { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+table.scale th { text-align: left; font-size: 0.76rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 4px 10px 6px 0; border-bottom: 1.5px solid var(--line); }
+table.scale td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.scale td.num { text-align: right; white-space: nowrap; }
+table.scale tr.us td { font-weight: 700; }
+
+footer { margin-top: 28px; color: var(--muted); font-size: 0.88rem; display: grid; gap: 4px; }
+footer a { color: inherit; }
+
+@media (max-width: 1080px) {
+  .l3 { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
+  .l3 > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 960px) {
+  .bench { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bench .verdict { grid-column: 1 / -1; grid-template-columns: auto 1fr 1fr; align-items: center; }
+  .l1-lower, .l2, .studyrow, .l3, .trainrow, .l4, .l4-lower { grid-template-columns: 1fr; }
+  .testbench { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  canvas.netview { height: 440px; }
+}
+@media (max-width: 600px) {
+  .bench { grid-template-columns: 1fr; }
+  .bench .verdict { grid-template-columns: 1fr; }
+  .outputs { gap: 5px; }
+  .det { padding: 4px; } .det .dscore { display: none; }
+  .mistakes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .detail-grid { grid-template-columns: 1fr; }
+  .detail-grid canvas { max-width: 160px; }
+  canvas.netview { height: 360px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } #bio .fire-pulse { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <span class="o"></span><span></span><span></span><span class="o"></span>
+      <span class="o"></span><span class="o"></span><span></span><span class="o"></span>
+      <span class="o"></span><span></span><span class="o"></span><span class="o"></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <div>
+      <h1>Digit Network Lab</h1>
+      <p>Build up a neural network that reads handwritten digits, one piece at a time.</p>
+    </div>
+  </div>
+  <nav class="levels" role="tablist" aria-label="Levels">
+    <button role="tab" id="tab-0" aria-selected="true" data-level="0">Start</button>
+    <button role="tab" id="tab-1" aria-selected="false" data-level="1">1 · One neuron</button>
+    <button role="tab" id="tab-2" aria-selected="false" data-level="2">2 · One layer</button>
+    <button role="tab" id="tab-3" aria-selected="false" data-level="3">3 · Hidden layer</button>
+    <button role="tab" id="tab-4" aria-selected="false" data-level="4">4 · Full network</button>
+    <button role="tab" id="tab-5" aria-selected="false" data-level="5">Ethics</button>
+    <button role="tab" id="tab-6" aria-selected="false" data-level="6">Lab report</button>
+  </nav>
+</header>
+
+<!-- ======================= START ======================= -->
+<section id="level-0" role="tabpanel" aria-labelledby="tab-0">
+  <div class="intro">
+    <h2>Start here</h2>
+    <p>In this lab you'll build a neural network that reads handwritten digits, one piece at a time, and see every number it uses along the way. Then you'll use what you saw to look at ethical problems with much larger AI systems.</p>
+  </div>
+
+  <div class="panel" style="margin-bottom:14px">
+    <span class="label">The plan</span>
+    <ol class="roadmap">
+      <li><b>Start:</b> where the word "neuron" comes from.</li>
+      <li><b>Level 1:</b> one artificial neuron, set by hand.</li>
+      <li><b>Level 2:</b> ten neurons that learn from examples.</li>
+      <li><b>Level 3:</b> a hidden layer, trained with backpropagation.</li>
+      <li><b>Level 4:</b> the full network from the 3Blue1Brown video.</li>
+      <li><b>Ethics:</b> black boxes, training data, and environmental cost.</li>
+      <li><b>Lab report:</b> download your answers and results as a PDF for Canvas.</li>
+    </ol>
+    <p class="note">Each level ends with lab report questions. Your answers are saved in this browser as you type.</p>
+  </div>
+
+  <div class="panel">
+    <h3>Where the word "neuron" comes from</h3>
+    <p>Your brain has about 86 billion nerve cells called <span class="term">neurons</span>. Each one receives signals from other neurons through connections called <span class="term">synapses</span>. Some synapses push the neuron toward firing (<span class="term">excitatory</span>). Others push it away from firing (<span class="term">inhibitory</span>). When enough excitation adds up, the neuron <span class="term">fires</span>: it sends an electrical pulse down its <span class="term">axon</span> to the next neurons.</p>
+    <p>In 1943, Warren McCulloch and Walter Pitts described a simplified, mathematical version of this. Every network in this lab is built from that simplified version. Try it: click A, B, or C to make that neuron fire, and change the synapse strengths and the threshold.</p>
+
+    <div class="neuron-lab">
+      <div class="stack">
+        <span class="label">Biological version (simplified)</span>
+        <svg id="bio" viewBox="0 0 520 300" role="img" aria-label="Diagram of a neuron receiving signals from neurons A, B and C"></svg>
+      </div>
+      <div class="stack">
+        <span class="label">The same neuron as math</span>
+        <div class="mathrows" id="mathrows"></div>
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <span class="label">Threshold</span>
+            <div class="stepper">
+              <button id="n0-th-down" aria-label="Lower the threshold">−</button>
+              <output id="n0-th" class="num">1</output>
+              <button id="n0-th-up" aria-label="Raise the threshold">+</button>
+            </div>
+          </div>
+          <div class="bulb small" id="n0-bulb">off</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="neuron-lower">
+      <div class="stack">
+        <span class="label">Every combination of inputs</span>
+        <div class="tablewrap"><table class="truth" id="truth"></table></div>
+        <p class="note">This table lists what the neuron does for all 8 combinations of A, B and C. It updates as you change the synapses.</p>
+      </div>
+      <div class="stack">
+        <span class="label">Challenges</span>
+        <ol class="challenges" id="n0-challenges"></ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="l1-lower">
+    <div class="panel">
+      <span class="label">The comparison</span>
+      <div class="tablewrap">
+        <table class="scale">
+          <thead><tr><th>Brain</th><th>Artificial neural network</th></tr></thead>
+          <tbody>
+            <tr><td>Signal arriving from another neuron</td><td>Input (a number)</td></tr>
+            <tr><td>Synapse strength</td><td>Weight</td></tr>
+            <tr><td>Excitatory or inhibitory synapse</td><td>Positive or negative weight</td></tr>
+            <tr><td>Cell body adding up incoming signals</td><td>Weighted sum</td></tr>
+            <tr><td>Firing threshold</td><td>Threshold (or bias)</td></tr>
+            <tr><td>Firing a pulse down the axon</td><td>Output</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="label">Where the comparison stops working</span>
+      <ul class="tries">
+        <li><b>Scale.</b> A brain has about 86 billion neurons and roughly 100 trillion synapses. The network in Level 4 has 42 neurons.</li>
+        <li><b>Timing.</b> Real neurons fire in pulses over time. An artificial neuron outputs one number per input.</li>
+        <li><b>Learning.</b> The networks in this lab learn by backpropagation (Level 3). There's no evidence that brains learn this way, and how brains learn is still an open research question.</li>
+        <li><b>The name.</b> "Neural network" makes AI sound more like a brain than it is. Keep that in mind when you read about AI.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= LEVEL 1 ======================= -->
+<section id="level-1" role="tabpanel" aria-labelledby="tab-1" hidden>
+  <div class="intro">
+    <h2>One neuron, 25 inputs</h2>
+    <p>A <span class="term">neuron</span> takes in numbers and puts out one number. This neuron's inputs are the 25 squares of a picture: 1 if the square is inked, 0 if it's blank. Each input has a <span class="term">weight</span>. Here the weights are <b style="color:var(--plus)">+1</b> (blue), <b style="color:var(--minus)">−1</b> (orange), or 0 (blank). The neuron multiplies each input by its weight, adds everything up, and fires if the total reaches the <span class="term">threshold</span>.</p>
+  </div>
+
+  <div class="bench">
+    <div class="panel">
+      <span class="label">Weights</span>
+      <div class="tools" role="group" aria-label="Weight to paint">
+        <button class="tool" id="tool-plus" aria-pressed="true" data-tool="1"><span class="swatch p"></span>+1</button>
+        <button class="tool" id="tool-minus" aria-pressed="false" data-tool="-1"><span class="swatch m"></span>−1</button>
+        <button class="tool" id="tool-zero" aria-pressed="false" data-tool="0"><span class="swatch"></span>0</button>
+      </div>
+      <div class="grid5 prefs" id="prefs" aria-label="Weights, 5 by 5"></div>
+      <button class="btn" id="prefs-clear">Set all weights to 0</button>
+    </div>
+
+    <div class="panel">
+      <span class="label">Input</span>
+      <p class="note">Click or drag to draw, or load a shape from the test set below.</p>
+      <div class="grid5 draw" id="drawing" aria-label="Input picture, 5 by 5"></div>
+      <button class="btn" id="draw-clear">Erase</button>
+    </div>
+
+    <div class="panel">
+      <span class="label">Input × weight</span>
+      <p class="note">A square counts only if it has ink and a nonzero weight.</p>
+      <div class="grid5 points" id="points" aria-label="Input times weight for each square"></div>
+    </div>
+
+    <div class="panel verdict">
+      <div class="bulb" id="bulb" aria-live="polite">off</div>
+      <div class="scoreline"><span class="label">Weighted sum</span><span class="num" id="total">0</span></div>
+      <div>
+        <div class="label" style="margin-bottom:6px">Threshold</div>
+        <div class="stepper">
+          <button id="th-down" aria-label="Lower the threshold">−</button>
+          <output id="th" class="num">3</output>
+          <button id="th-up" aria-label="Raise the threshold">+</button>
+        </div>
+        <p class="note" style="margin-top:6px">Fires when the weighted sum is at least this.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="l1-lower">
+    <div class="panel">
+      <span class="label">Test set · highlighted shapes make the neuron fire</span>
+      <div class="testbench" id="testbench"></div>
+    </div>
+    <div class="panel">
+      <span class="label">Challenges</span>
+      <ol class="challenges" id="challenges"></ol>
+      <div class="vocab" style="border-top:1.5px dashed var(--line);padding-top:12px;display:grid;gap:6px">
+        <span class="label">Vocabulary</span>
+        <dl>
+          <dt>Neuron</dt><dd>Takes inputs, computes a weighted sum, and outputs a value.</dd>
+          <dt>Weight</dt><dd>How much one input counts, and in which direction.</dd>
+          <dt>Weighted sum</dt><dd>Each input times its weight, all added up.</dd>
+          <dt>Bias</dt><dd>The threshold moved to the other side: weighted sum + bias ≥ 0. A threshold of 3 is a bias of −3. The video uses bias.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= LEVEL 2 ======================= -->
+<section id="level-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+  <div class="intro">
+    <h2>One layer: ten neurons, one per digit</h2>
+    <p>The picture is now 14 × 14, so each neuron has 196 inputs and 196 weights. There are ten neurons, one for each digit 0–9. Together they form a <span class="term">layer</span>. Every neuron computes its weighted sum, and the network's answer is the neuron with the highest sum. All weights start at 0. You set them by <span class="term">training</span>: showing the network labeled examples.</p>
+  </div>
+
+  <div class="l2">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><span class="label">Input</span><span class="note">Draw inside the dashed box</span></div>
+      <div class="padwrap"><canvas class="pad" id="pad2" width="320" height="320" aria-label="Drawing pad, 14 by 14"></canvas></div>
+      <div class="row">
+        <button class="btn" id="pad2-clear">Clear</button>
+        <button class="btn" id="pad2-sample">Load a real sample</button>
+      </div>
+      <div class="verdict-line" aria-live="polite"><span class="label">Network's answer</span><span class="big" id="guess2">?</span><span id="guess2-note" class="note"></span></div>
+      <span class="label">Train on this drawing as a…</span>
+      <div class="digitbtns" id="teach2"></div>
+      <p class="msg" id="msg2" aria-live="polite">Draw a digit, then click its label to train on it.</p>
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between">
+          <span class="label">Each neuron's 196 weights, shown as a picture</span>
+          <div class="legend"><span><span class="swatch p"></span>positive weight</span><span><span class="swatch m"></span>negative weight</span></div>
+        </div>
+        <div class="outputs" id="outputs2"></div>
+      </div>
+
+      <div class="panel">
+        <span class="label" id="why2-title">Weighted sum for neuron 0</span>
+        <div class="why">
+          <figure><canvas id="why2-w" width="196" height="196"></canvas><figcaption>Weights</figcaption></figure>
+          <figure><canvas id="why2-x" width="196" height="196"></canvas><figcaption>Input</figcaption></figure>
+          <figure><canvas id="why2-p" width="196" height="196"></canvas><figcaption>Input × weight. Sum: <b class="num" id="why2-total">0</b></figcaption></figure>
+        </div>
+        <p class="note">Same calculation as Level 1, with 196 squares and weights that aren't limited to +1 and −1. Click any neuron above to see its calculation.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="studyrow">
+    <div class="panel">
+      <span class="label">Training set · 5,000 handwritten digits</span>
+      <p>These are real digits written by people, each labeled with the correct answer.</p>
+      <div class="row">
+        <button class="btn" id="study-10">Train on 10</button>
+        <button class="btn" id="study-100">Train on 100</button>
+        <button class="btn" id="study-1000">Train on 1,000</button>
+        <button class="btn" id="forget2">Reset weights to 0</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="num" id="n-own">0</span><span class="label">your drawings</span></div>
+        <div class="stat"><span class="num" id="n-real">0</span><span class="label">training examples</span></div>
+      </div>
+      <details class="explain">
+        <summary>The learning rule</summary>
+        <p>For each training example: add a fraction (0.2) of the input to the correct neuron's weights. If the network's answer was wrong, also add the full input to the correct neuron's weights and subtract it from the weights of the neuron that wrongly won.</p>
+        <p>This is a version of the <span class="term">perceptron</span> learning rule, published by Frank Rosenblatt in 1958.</p>
+      </details>
+    </div>
+
+    <div class="panel">
+      <span class="label">Test set · 1,000 digits not used in training</span>
+      <div class="row">
+        <button class="btn solid" id="quiz2">Run the test</button>
+        <div class="history" id="history2" aria-live="polite"><span class="note">No tests run yet.</span></div>
+      </div>
+      <p id="quiz2-result" style="font-size:.95rem"></p>
+      <div class="mistakes" id="mistakes2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= LEVEL 3 ======================= -->
+<section id="level-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+  <div class="intro">
+    <h2>Adding a hidden layer</h2>
+    <p>In Level 2, each output neuron had one picture to match the whole digit. People write 7s in many ways, and one picture can't cover them all. This network adds a <span class="term">hidden layer</span> of 16 neurons between the input and the output. Each hidden neuron looks at all 196 pixels. Each output neuron looks only at the 16 hidden neurons.</p>
+    <p>Each hidden neuron squeezes its weighted sum into a number between 0 and 1 with the <span class="term">sigmoid</span> function. That number is its <span class="term">activation</span>. The weights start random. Training uses <span class="term">backpropagation</span>, the method in the video's part 3.</p>
+  </div>
+
+  <div class="l3">
+    <div class="panel">
+      <span class="label">Input</span>
+      <div class="padwrap"><canvas class="pad" id="pad3" width="300" height="300" aria-label="Drawing pad, 14 by 14"></canvas></div>
+      <div class="row">
+        <button class="btn" id="pad3-clear">Clear</button>
+        <button class="btn" id="pad3-sample">Load a real sample</button>
+      </div>
+      <div class="verdict-line" aria-live="polite"><span class="label">Answer</span><span class="big" id="guess3">?</span><span id="guess3-note" class="note"></span></div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <span class="label">Hidden layer · 16 neurons</span>
+        <div class="legend"><span><span class="swatch p"></span>positive weight</span><span><span class="swatch m"></span>negative weight</span></div>
+      </div>
+      <div class="hidden16" id="hidden3"></div>
+      <p class="note">Each picture is one hidden neuron's 196 weights. The bar under it is its activation for the current input, from 0 to 1.</p>
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <span class="label">Output layer · probability</span>
+        <div class="bars" id="bars3"></div>
+        <p class="note">The outputs are turned into probabilities that add up to 100% (the <span class="term">softmax</span> function).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="trainrow">
+    <div class="panel">
+      <span class="label">Training</span>
+      <div class="row">
+        <button class="btn solid" id="train3-1">Train 1 epoch</button>
+        <button class="btn" id="train3-5">Train 5 epochs</button>
+        <button class="btn" id="reset3">New random weights</button>
+      </div>
+      <div class="row">
+        <label for="lr3" class="note">Learning rate</label>
+        <select id="lr3">
+          <option value="0.005">0.005 (small steps)</option>
+          <option value="0.05" selected>0.05</option>
+          <option value="0.5">0.5</option>
+          <option value="5">5 (huge steps)</option>
+        </select>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="num" id="ep3">0</span><span class="label">epochs</span></div>
+        <div class="stat"><span class="num" id="acc3">–</span><span class="label">test accuracy</span></div>
+        <div class="stat"><span class="num" id="loss3">–</span><span class="label">average loss</span></div>
+      </div>
+      <div class="vocab">
+        <dl>
+          <dt>Epoch</dt><dd>One pass through all 5,000 training examples.</dd>
+          <dt>Loss</dt><dd>How wrong the network was on an example. 0 means it gave the right answer 100% probability. It grows as that probability shrinks.</dd>
+          <dt>Learning rate</dt><dd>How big a step each weight takes per example.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="label">Test accuracy by epoch · 1,000 digits not used in training</span>
+      <svg class="chart" id="chart3" viewBox="0 0 420 190" role="img" aria-label="Test accuracy by epoch"></svg>
+      <p class="note" id="chart3-note">The dashed line is the best test score from Level 2, if you ran one.</p>
+    </div>
+  </div>
+
+  <!-- Sigmoid explainer -->
+  <div class="panel sigpanel" style="margin-top:14px">
+    <div class="stack">
+      <h3>The sigmoid function</h3>
+      <p><span class="term">Sigmoid</span> means "S-shaped." The name comes from sigma, the Greek letter S. It takes any number and turns it into a number between 0 and 1.</p>
+      <p>In Level 1 the neuron was off or on: below the threshold it output 0, at or above it output 1. The sigmoid does the same job, smoothly. A large negative sum gives almost 0. A large positive sum gives almost 1. Sums near 0 give something in between.</p>
+      <p><b>Why smooth?</b> Training changes weights by tiny amounts. With an on/off rule, a tiny change usually does nothing at all, until suddenly the output flips. The network can't tell whether a change was helping. With the sigmoid, every small change to a weight makes a small change to the output, so training can measure which direction is better.</p>
+      <p class="note">Formula: σ(z) = 1 ÷ (1 + e<sup>−z</sup>), where e ≈ 2.718. z is the weighted sum plus the bias.</p>
+    </div>
+    <div class="stack">
+      <svg class="chart" id="sigchart" viewBox="0 0 420 220" role="img" aria-label="Graph of the sigmoid function"></svg>
+      <label for="sig-z" class="note">Weighted sum + bias (z): <b class="num" id="sig-zv">0.0</b> → activation <b class="num" id="sig-av">0.50</b></label>
+      <input type="range" id="sig-z" min="-8" max="8" step="0.1" value="0">
+      <label class="note row"><input type="checkbox" id="sig-step"> Compare with Level 1's on/off rule (threshold at 0)</label>
+    </div>
+  </div>
+
+  <!-- Backpropagation walkthrough -->
+  <div class="panel" style="margin-top:14px" id="bp">
+    <div class="row" style="justify-content:space-between">
+      <h3>Backpropagation, one example at a time</h3>
+      <button class="btn" id="bp-new">Pick a different example</button>
+    </div>
+    <p>After each training example, the network has to decide how to change about 3,300 weights. <span class="term">Backpropagation</span> is the method for working that out. It starts with the error at the output layer and works backward, one layer at a time, to find each weight's share of the error. Step through one real example with this network's actual numbers.</p>
+    <div class="seg" role="tablist" aria-label="Backpropagation steps" id="bp-tabs"></div>
+    <div class="bp-grid">
+      <figure class="bp-input"><canvas id="bp-x" width="140" height="140"></canvas><figcaption class="note" id="bp-xcap"></figcaption></figure>
+      <div id="bp-body" class="stack"></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="bp-prev">← Back</button>
+      <button class="btn solid" id="bp-next">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= LEVEL 4 ======================= -->
+<section id="level-4" role="tabpanel" aria-labelledby="tab-4" hidden>
+  <div class="intro">
+    <h2>The full network</h2>
+    <p>This is the structure from the 3Blue1Brown video: an input layer, two hidden layers of 16 neurons, and an output layer of 10. The video uses 28 × 28 pictures (784 inputs). This version uses 14 × 14 (196 inputs) so it trains in seconds on a laptop. Everything else works the same way.</p>
+  </div>
+
+  <div class="l4">
+    <div class="stack">
+      <div class="panel">
+        <span class="label">Input</span>
+        <div class="padwrap"><canvas class="pad" id="pad4" width="280" height="280" aria-label="Drawing pad, 14 by 14"></canvas></div>
+        <div class="row">
+          <button class="btn" id="pad4-clear">Clear</button>
+          <button class="btn" id="pad4-sample">Load a real sample</button>
+        </div>
+        <div class="verdict-line" aria-live="polite"><span class="label">Answer</span><span class="big" id="guess4">?</span><span id="guess4-note" class="note"></span></div>
+        <span class="label">Train on this drawing as a…</span>
+        <div class="digitbtns" id="teach4"></div>
+        <p class="msg" id="msg4" aria-live="polite">Each click runs one step of backpropagation on your drawing.</p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between">
+          <span class="label">Network · click any neuron</span>
+          <div class="seg" role="group" aria-label="Line display">
+            <button id="mode-w" aria-pressed="true">Show weights</button>
+            <button id="mode-s" aria-pressed="false">Show signal for this input</button>
+          </div>
+        </div>
+        <canvas class="netview" id="net4" aria-label="Diagram of the network"></canvas>
+        <p class="note" id="net4-note">Circle brightness is activation. Lines are weights: blue positive, orange negative, thicker means larger. Only the strongest connections into each neuron are drawn.</p>
+      </div>
+
+      <div class="panel">
+        <span class="label">Train on real examples from the training set</span>
+        <div class="row" id="train4-btns">
+          <button class="btn" data-n="1">1</button>
+          <button class="btn" data-n="10">10</button>
+          <button class="btn" data-n="100">100</button>
+          <button class="btn" data-n="1000">1,000</button>
+          <button class="btn" data-n="5000">5,000 (1 epoch)</button>
+          <button class="btn" data-n="25000">25,000 (5 epochs)</button>
+        </div>
+        <div class="row">
+          <label for="lr4" class="note">Learning rate</label>
+          <select id="lr4">
+            <option value="0.005">0.005 (small steps)</option>
+            <option value="0.05" selected>0.05</option>
+            <option value="0.5">0.5</option>
+            <option value="5">5 (huge steps)</option>
+          </select>
+          <button class="btn" id="reset4">New random weights</button>
+        </div>
+        <span class="label" style="margin-top:6px">Training history · drag to go back</span>
+        <svg class="chart" id="chart4" viewBox="0 0 520 150" role="img" aria-label="Test accuracy after each training step"></svg>
+        <input type="range" id="timeline4" min="0" max="0" value="0" aria-label="Training history">
+        <div class="timeline-meta"><span id="tl4-step">Step 0: random weights</span><span id="tl4-acc">Test accuracy: –</span></div>
+        <p class="note" id="tl4-seen">0 examples seen</p>
+      </div>
+
+      <div class="panel" id="detail4">
+        <span class="label" id="detail4-title">Neuron details</span>
+        <div id="detail4-body" class="note">Click a neuron in the diagram to see its weights and the full calculation for the current input.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="l4-lower">
+    <div class="panel">
+      <span class="label">Things to try</span>
+      <ol class="tries">
+        <li>Start from random weights. Draw a digit and note the answer. Train on 1 example, then 10, then 100, then 1,000. After how many does it get your digit right?</li>
+        <li>Start from random weights and train only on your own drawings, one at a time. How high can you get the test accuracy? How many drawings would you need to match one epoch?</li>
+        <li>Draw a letter, a smiley face, or a scribble. The network still picks a digit, often with high probability. It has no way to answer "this isn't a digit."</li>
+        <li>Clear the input. What does it say for a blank picture?</li>
+        <li>Draw a small 1 near the left edge, then one in the center. Why might position matter? (Hint: each weight belongs to one pixel.)</li>
+        <li>Click neurons in the second hidden layer. Can you find one that is active mostly for one digit? Do the first-layer pictures look like edges and loops, as the video hoped?</li>
+      </ol>
+    </div>
+    <div class="panel">
+      <span class="label">The same parts, at larger scale</span>
+      <div class="tablewrap">
+        <table class="scale">
+          <thead><tr><th>Network</th><th>Year</th><th>Job</th><th style="text-align:right">Parameters</th></tr></thead>
+          <tbody>
+            <tr class="us"><td>This network</td><td>–</td><td>14 × 14 digits</td><td class="num">3,594</td></tr>
+            <tr><td>3Blue1Brown's network</td><td>2017</td><td>28 × 28 digits</td><td class="num">13,002</td></tr>
+            <tr><td>LeNet-5</td><td>1998</td><td>Reading handwritten bank checks</td><td class="num">about 60,000</td></tr>
+            <tr><td>AlexNet</td><td>2012</td><td>Sorting photos into 1,000 categories</td><td class="num">about 60 million</td></tr>
+            <tr><td>GPT-3</td><td>2020</td><td>Predicting the next word of text</td><td class="num">175 billion</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note"><span class="term">Parameters</span> are all the weights and biases. Every network in this table is built from neurons that compute weighted sums, apply an activation function, and are trained with backpropagation and gradient descent. The large ones differ in size, in how the layers are connected, and in how much training data they see. They share the same limits too: they learn only the patterns in their training data, and they produce an answer whether or not one makes sense.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= ETHICS ======================= -->
+<section id="level-5" role="tabpanel" aria-labelledby="tab-5" hidden>
+  <div class="intro">
+    <h2>Ethics: what this lab shows about real AI</h2>
+    <p>You've now seen every part of a working neural network. The AI systems in the news are built from the same parts, at enormous scale. This section looks at three problems that come with that scale: decisions nobody can explain, training data that leaves people out, and the energy and water it takes to train and run these systems.</p>
+  </div>
+
+  <!-- 1. Black box -->
+  <div class="panel ethics-panel">
+    <div class="stack">
+      <h3>1. The black box problem</h3>
+      <p>In this lab you could inspect every weight and every calculation. That is rare. Most AI systems used by companies and governments are closed: the public can't see the weights, the training data, or how the system was tested.</p>
+      <p>Seeing everything is still not the same as understanding it. On the right is a mistake made by your Level 4 network, along with all 3,594 numbers that produced it. Every one of them is visible. Try to explain the mistake from them.</p>
+      <p>Now scale up. GPT-3 has 175 billion parameters. If each of this network's numbers were a 1 mm square, its grid would be about 6 cm wide. GPT-3's grid would be about 418 meters on a side. When a system this large makes a decision about a person, it is very hard to say why. That is the <span class="term">black box problem</span>. Researchers who try to work out what large networks have learned work in a field called <span class="term">interpretability</span>. It's the same thing you did by clicking neurons in Level 4, on a vastly larger scale, and it has only partial answers so far.</p>
+      <p><b>Why it matters.</b> Systems like these are used to screen job applications, set credit limits, flag medical scans, and estimate whether a defendant will reoffend.</p>
+      <ul class="tries">
+        <li>In 2016, ProPublica reported that COMPAS, a risk-scoring tool used in US courts, wrongly labeled Black defendants as likely to reoffend at nearly twice the rate of white defendants.</li>
+        <li>In 2018, Reuters reported that Amazon stopped using an experimental résumé-screening model after finding that it downgraded résumés containing the word "women's," a pattern it had learned from past hiring data.</li>
+      </ul>
+      <p>A person who is turned down by a system like this may not be able to find out why, or to challenge the decision.</p>
+    </div>
+    <div class="stack" id="bb">
+      <div id="bb-gate" class="stack" hidden>
+        <p class="note">This needs a trained network. Your Level 4 network's test accuracy is below 80%.</p>
+        <button class="btn solid" id="bb-train">Train the Level 4 network for 2 epochs</button>
+      </div>
+      <div id="bb-main" class="stack">
+        <div class="bb-top">
+          <canvas id="bb-img" width="120" height="120"></canvas>
+          <div class="stack" style="gap:6px">
+            <p id="bb-text"></p>
+            <div class="row">
+              <button class="btn" id="bb-next">Show another mistake</button>
+              <button class="btn" id="bb-open">Inspect it in Level 4</button>
+            </div>
+          </div>
+        </div>
+        <canvas id="bb-params" aria-label="All of the network's weights and biases"></canvas>
+        <p class="note">All 3,594 weights and biases of the Level 4 network, one square each, in order from the first layer to the last. Blue is positive, orange is negative.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Training data -->
+  <div class="panel ethics-panel" style="margin-top:14px">
+    <div class="stack">
+      <h3>2. Whose data?</h3>
+      <p>A network only learns patterns that are in its training data. The digits in this lab come from MNIST, a dataset assembled in the 1990s from handwriting collected by the US National Institute of Standards and Technology. The writers were US Census Bureau employees and American high school students.</p>
+      <p>The test set accuracy in Level 4 measures how well the network reads <i>their</i> handwriting. It doesn't measure how well the network reads yours. Test it: draw each digit when asked.</p>
+      <p>This is a small version of a large problem. Face recognition systems trained mostly on lighter-skinned faces have made far more errors on darker-skinned faces. Speech recognition trained mostly on some accents works worse for others. In each case the people left out of the training data get worse results, and the test scores can look fine because the test data leaves out the same people.</p>
+    </div>
+    <div class="stack" id="hw">
+      <div id="hw-gate" class="stack" hidden>
+        <p class="note">This needs a trained network. Your Level 4 network's test accuracy is below 80%.</p>
+        <button class="btn solid" id="hw-train">Train the Level 4 network for 2 epochs</button>
+      </div>
+      <div id="hw-main" class="stack">
+        <div class="verdict-line"><span class="label">Draw a</span><span class="big" id="hw-target">0</span><span class="note" id="hw-progress"></span></div>
+        <div class="padwrap" style="max-width:260px"><canvas class="pad" id="pad5" width="260" height="260" aria-label="Drawing pad for the handwriting test"></canvas></div>
+        <div class="row">
+          <button class="btn solid" id="hw-check">Check</button>
+          <button class="btn" id="hw-clear">Clear</button>
+          <button class="btn" id="hw-restart">Start over</button>
+        </div>
+        <div class="hw-results" id="hw-results"></div>
+        <p id="hw-summary"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Environment -->
+  <div class="panel" style="margin-top:14px">
+    <h3>3. Energy, water, and carbon</h3>
+    <p>Every weight update in this lab is arithmetic: multiply, then add. This page counts every one it has done.</p>
+    <div class="stats">
+      <div class="stat"><span class="num" id="env-ops">0</span><span class="label">multiply-and-add calculations in this lab so far</span></div>
+      <div class="stat"><span class="num" id="env-time">0 s</span><span class="label">of computing time</span></div>
+      <div class="stat"><span class="num" id="env-wh">0</span><span class="label">watt-hours (estimated)</span></div>
+    </div>
+    <p class="note">The energy estimate assumes a laptop draws about 15 watts while it computes. For comparison, a phone charge is roughly 15 watt-hours.</p>
+    <div class="tablewrap">
+      <table class="scale">
+        <thead><tr><th>Training run</th><th style="text-align:right">Calculations</th><th style="text-align:right">Electricity</th><th>Other costs</th></tr></thead>
+        <tbody>
+          <tr><td>Level 4 network, 10 epochs</td><td class="num">about 1.1 billion</td><td class="num">a fraction of a watt-hour</td><td>–</td></tr>
+          <tr><td>GPT-3 (2020)</td><td class="num">about 3.1 × 10<sup>23</sup></td><td class="num">about 1,287,000 kWh</td><td>about 552 tonnes of CO₂; about 700,000 liters of water evaporated for cooling</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Training GPT-3 took roughly <b>290 trillion</b> times as many calculations as training your Level 4 network for 10 epochs. Its estimated electricity use is about what 120 US homes use in a year.</p>
+    <p><b>What these numbers leave out.</b> They cover one training run of a 2020 model. Newer models are larger, and their companies have not published their costs. Training happens once, but every time someone uses a model it computes again, and with millions of users that use can outweigh the training. The GPT-3 figures are estimates by outside researchers, because the companies involved did not release exact figures. That gap is itself a transparency problem.</p>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <span class="label">Sources</span>
+    <ul class="sources">
+      <li>J. Angwin et al., "Machine Bias," ProPublica, 2016.</li>
+      <li>J. Dastin, "Amazon scraps secret AI recruiting tool that showed bias against women," Reuters, 2018.</li>
+      <li>J. Buolamwini and T. Gebru, "Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification," 2018.</li>
+      <li>A. Koenecke et al., "Racial disparities in automated speech recognition," PNAS, 2020.</li>
+      <li>T. Brown et al., "Language Models are Few-Shot Learners" (GPT-3), 2020. arXiv:2005.14165.</li>
+      <li>D. Patterson et al., "Carbon Emissions and Large Neural Network Training," 2021. arXiv:2104.10350.</li>
+      <li>P. Li et al., "Making AI Less 'Thirsty'," 2023. arXiv:2304.03271.</li>
+      <li>Y. LeCun, C. Cortes, C. Burges, "The MNIST database of handwritten digits."</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================= LAB REPORT ======================= -->
+<section id="level-6" role="tabpanel" aria-labelledby="tab-6" hidden>
+  <div class="intro">
+    <h2>Lab report</h2>
+    <p>Fill in your name, check your answers, and download the PDF. Upload that file to the Canvas assignment.</p>
+  </div>
+  <div class="l2">
+    <div class="panel">
+      <label class="label" for="rep-name">Name</label>
+      <input id="rep-name" class="textin" autocomplete="name">
+      <label class="label" for="rep-class">Class period</label>
+      <input id="rep-class" class="textin">
+      <button class="btn solid" id="rep-pdf">Download PDF</button>
+      <button class="btn" id="rep-copy">Copy as text</button>
+      <p class="msg" id="rep-msg" aria-live="polite"></p>
+      <p class="note">Your answers are saved in this browser on this computer. If you switch computers or clear your browser data, they're gone, so download the PDF before you leave. If the download doesn't start, use "Copy as text" and paste into the Canvas text box instead.</p>
+      <textarea id="rep-fallback" class="answer" rows="8" hidden aria-label="Report text"></textarea>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <span class="label">Your results</span>
+        <dl class="results" id="rep-results"></dl>
+      </div>
+      <div class="panel">
+        <span class="label">Your answers</span>
+        <div id="rep-answers" class="stack" style="gap:10px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>All calculations happen in your browser. Nothing you draw is sent anywhere.</p>
+  <p>Handwriting samples: the MNIST dataset (LeCun, Cortes &amp; Burges), via <a href="https://github.com/DFin/Neural-Network-Visualisation" target="_blank" rel="noopener">DFin's visualiser</a>. Based on 3Blue1Brown's <a href="https://youtu.be/aircAruvnKk" target="_blank" rel="noopener">neural network video</a> and Michael Nielsen's <a href="https://neuralnetworksanddeeplearning.com/chap1.html" target="_blank" rel="noopener">Neural Networks and Deep Learning</a>.</p>
+</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="samples.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmt = (n) => n.toLocaleString("en-US");
+const pctStr = (p) => (p * 100).toFixed(p >= 0.995 || p < 0.005 ? 0 : 1) + "%";
+
+/* =====================================================================
+   Shared data: 6,000 MNIST digits at 14x14. 0–4999 train, 5000–5999 test.
+   ===================================================================== */
+const N = 14, P = N * N;
+const decode = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+const S_LAB = decode(SAMPLES.labels);
+const S_IMG = Float32Array.from(decode(SAMPLES.images), (v) => v / 255);
+const TRAIN_END = 5000, TEST_START = 5000, TEST_END = SAMPLES.count;
+const sample = (k) => S_IMG.subarray(k * P, (k + 1) * P);
+
+/* seeded random numbers so "new random weights" is reproducible per click */
+function rng(seed) {
+  let a = seed >>> 0;
+  const next = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  next.normal = () => Math.sqrt(-2 * Math.log(1 - next())) * Math.cos(2 * Math.PI * next());
+  return next;
+}
+let seedCounter = 1;
+// running count of multiply-and-add operations done by every network on the page (shown on the Ethics tab)
+const COMPUTE = { ops: 0, ms: 0 };
+
+// Answers, name and results are kept in this browser so a reload doesn't lose a student's work.
+const STORE_KEY = "digit-network-lab-v1";
+let STORE = { answers: {}, name: "", cls: "", results: {} };
+try { const raw = localStorage.getItem(STORE_KEY); if (raw) STORE = Object.assign(STORE, JSON.parse(raw)); } catch (e) { /* storage blocked: work without it */ }
+if (STORE.results.compute) { COMPUTE.ops = STORE.results.compute.ops || 0; COMPUTE.ms = STORE.results.compute.ms || 0; }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(STORE)); } catch (e) { /* ignore */ } }
+
+/* =====================================================================
+   Shared drawing helpers
+   ===================================================================== */
+function sizeCanvas(c, h) {
+  const dpr = window.devicePixelRatio || 1, w = c.clientWidth || c.width;
+  const hh = h ?? (c.clientHeight || w);
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(hh * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(hh * dpr); }
+  return c.getContext("2d");
+}
+function paintCells(c, values, colorOf, opts = {}) {
+  const ctx = sizeCanvas(c), s = c.width / N;
+  ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, c.width, c.height);
+  for (let i = 0; i < P; i++) {
+    const [color, a] = colorOf(values[i]);
+    if (a <= 0.01) continue;
+    ctx.globalAlpha = Math.min(1, a); ctx.fillStyle = color;
+    ctx.fillRect((i % N) * s, Math.floor(i / N) * s, s + 0.5, s + 0.5);
+  }
+  ctx.globalAlpha = 1;
+  if (opts.grid) {
+    ctx.strokeStyle = css("--line"); ctx.lineWidth = 1; ctx.beginPath();
+    for (let k = 1; k < N; k++) { const p = Math.round(k * s) + 0.5; ctx.moveTo(p, 0); ctx.lineTo(p, c.height); ctx.moveTo(0, p); ctx.lineTo(c.width, p); }
+    ctx.stroke();
+  }
+  if (opts.guide) {
+    ctx.strokeStyle = css("--muted"); ctx.setLineDash([s * 0.3, s * 0.25]); ctx.lineWidth = Math.max(1, s * 0.06);
+    ctx.strokeRect(2 * s, 2 * s, 10 * s, 10 * s); ctx.setLineDash([]);
+  }
+}
+const inkColor = (v) => [css("--ink"), v];
+const weightColor = (max) => (v) => [v >= 0 ? css("--plus") : css("--minus"), max ? Math.abs(v) / max : 0];
+const maxAbs = (arr) => { let m = 0; for (const v of arr) m = Math.max(m, Math.abs(v)); return m; };
+
+function renderBars(el, probs) {
+  if (!el.children.length) {
+    for (let d = 0; d < 10; d++) {
+      const r = document.createElement("div"); r.className = "b";
+      r.innerHTML = `<span class="d">${d}</span><span class="track"><i></i></span><span class="v num">0%</span>`;
+      el.appendChild(r);
+    }
+  }
+  let best = 0; for (let d = 1; d < 10; d++) if (probs[d] > probs[best]) best = d;
+  [...el.children].forEach((r, d) => {
+    r.classList.toggle("top", d === best);
+    r.querySelector("i").style.width = probs[d] * 100 + "%";
+    r.querySelector(".v").textContent = pctStr(probs[d]);
+  });
+  return best;
+}
+
+/* A 14x14 drawing pad. Brush paints soft-edged strokes about 2 pixels wide, like the MNIST digits. */
+function makePad(canvas, onChange) {
+  const pad = { x: new Float32Array(P), locked: false };
+  let down = false, last = null, erase = false;
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return [((e.clientX - r.left) / r.width) * N, ((e.clientY - r.top) / r.height) * N]; };
+  const stamp = (fx, fy) => {
+    for (let r = Math.floor(fy - 2); r <= fy + 2; r++) for (let c = Math.floor(fx - 2); c <= fx + 2; c++) {
+      if (r < 0 || c < 0 || r >= N || c >= N) continue;
+      const v = Math.max(0, Math.min(1, 1.25 - 0.85 * Math.hypot(c + 0.5 - fx, r + 0.5 - fy)));
+      const i = r * N + c;
+      pad.x[i] = erase ? Math.max(0, pad.x[i] - v) : Math.max(pad.x[i], v);
+    }
+  };
+  const line = (a, b) => {
+    const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 4));
+    for (let k = 0; k <= steps; k++) stamp(a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps);
+  };
+  canvas.addEventListener("pointerdown", (e) => {
+    if (pad.locked) return;
+    e.preventDefault(); canvas.setPointerCapture(e.pointerId);
+    down = true; erase = e.button === 2; last = pos(e); stamp(...last); onChange();
+  });
+  canvas.addEventListener("pointermove", (e) => { if (!down) return; const p = pos(e); line(last, p); last = p; onChange(); });
+  canvas.addEventListener("pointerup", () => (down = false));
+  canvas.addEventListener("pointercancel", () => (down = false));
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+  pad.render = () => paintCells(canvas, pad.x, inkColor, { grid: true, guide: true });
+  pad.clear = () => { pad.x.fill(0); onChange(); };
+  pad.set = (arr) => { pad.x = Float32Array.from(arr); onChange(); };
+  pad.isBlank = () => maxAbs(pad.x) < 0.05;
+  return pad;
+}
+
+/* =====================================================================
+   Shared multilayer network: sigmoid hidden layers, softmax output,
+   trained one example at a time with backpropagation.
+   ===================================================================== */
+class Network {
+  constructor(sizes, seed) {
+    this.sizes = sizes;
+    const r = rng(seed);
+    this.W = []; this.B = [];
+    for (let l = 0; l < sizes.length - 1; l++) {
+      const nin = sizes[l], nout = sizes[l + 1], w = new Float32Array(nin * nout), sd = 1 / Math.sqrt(nin);
+      for (let i = 0; i < w.length; i++) w[i] = r.normal() * sd;
+      this.W.push(w); this.B.push(new Float32Array(nout));
+    }
+    this.order = Array.from({ length: TRAIN_END }, (_, i) => i);
+    this.shuffle = r; this.pos = TRAIN_END; this.seen = 0;
+  }
+  get weightCount() { return this.W.reduce((s, w) => s + w.length, 0); }
+  get paramCount() { return this.W.reduce((s, w) => s + w.length, 0) + this.B.reduce((s, b) => s + b.length, 0); }
+  // returns { acts, sums }: acts[0] is the input; sums[l] are the weighted sums + bias of layer l+1
+  forward(x) {
+    const acts = [x], sums = [];
+    COMPUTE.ops += this.weightCount;
+    for (let l = 0; l < this.W.length; l++) {
+      const nin = this.sizes[l], nout = this.sizes[l + 1], w = this.W[l], a = acts[l];
+      const z = new Float32Array(nout), out = new Float32Array(nout);
+      for (let j = 0; j < nout; j++) { let s = this.B[l][j]; const o = j * nin; for (let i = 0; i < nin; i++) s += w[o + i] * a[i]; z[j] = s; }
+      if (l < this.W.length - 1) for (let j = 0; j < nout; j++) out[j] = 1 / (1 + Math.exp(-z[j]));
+      else { const m = Math.max(...z); let t = 0; for (let j = 0; j < nout; j++) { out[j] = Math.exp(z[j] - m); t += out[j]; } for (let j = 0; j < nout; j++) out[j] /= t; }
+      sums.push(z); acts.push(out);
+    }
+    return { acts, sums };
+  }
+  trainOne(x, y, lr) {
+    const { acts } = this.forward(x), L = this.W.length;
+    COMPUTE.ops += 2 * this.weightCount;   // backward pass: one pass to send error back, one to update weights
+    let delta = Float32Array.from(acts[L]); delta[y] -= 1;          // softmax + cross-entropy gradient
+    const loss = -Math.log(Math.max(1e-9, acts[L][y]));
+    for (let l = L - 1; l >= 0; l--) {
+      const nin = this.sizes[l], nout = this.sizes[l + 1], w = this.W[l], a = acts[l];
+      let prev = null;
+      if (l > 0) {
+        prev = new Float32Array(nin);
+        for (let j = 0; j < nout; j++) { const d = delta[j], o = j * nin; for (let i = 0; i < nin; i++) prev[i] += w[o + i] * d; }
+        for (let i = 0; i < nin; i++) prev[i] *= a[i] * (1 - a[i]);   // sigmoid slope
+      }
+      for (let j = 0; j < nout; j++) {
+        const d = lr * delta[j], o = j * nin;
+        if (d === 0) continue;
+        for (let i = 0; i < nin; i++) w[o + i] -= d * a[i];
+        this.B[l][j] -= d;
+      }
+      delta = prev;
+    }
+    return loss;
+  }
+  // train on the next n training examples (reshuffled every epoch); returns total loss
+  trainSome(n, lr) {
+    let loss = 0;
+    const t0 = performance.now();   // timed per batch: a single example is faster than the browser's clock resolution
+    for (let k = 0; k < n; k++) {
+      if (this.pos >= TRAIN_END) { for (let i = TRAIN_END - 1; i > 0; i--) { const j = Math.floor(this.shuffle() * (i + 1)); [this.order[i], this.order[j]] = [this.order[j], this.order[i]]; } this.pos = 0; }
+      const idx = this.order[this.pos++];
+      loss += this.trainOne(sample(idx), S_LAB[idx], lr);
+      this.seen++;
+    }
+    COMPUTE.ms += performance.now() - t0;
+    return loss;
+  }
+  predict(x) { const o = this.forward(x).acts.at(-1); let b = 0; for (let d = 1; d < 10; d++) if (o[d] > o[b]) b = d; return b; }
+  testAccuracy() { let r = 0; for (let k = TEST_START; k < TEST_END; k++) if (this.predict(sample(k)) === S_LAB[k]) r++; return r / (TEST_END - TEST_START); }
+  snapshot() { return { W: this.W.map((w) => w.slice()), B: this.B.map((b) => b.slice()) }; }
+  restore(s) { this.W = s.W.map((w) => w.slice()); this.B = s.B.map((b) => b.slice()); }
+}
+
+/* =====================================================================
+   Tabs
+   ===================================================================== */
+const LEVELS = ["0", "1", "2", "3", "4", "5", "6"];
+let currentLevel = "0";
+document.querySelectorAll("nav.levels button[data-level]").forEach((b) => {
+  b.addEventListener("click", () => {
+    currentLevel = b.dataset.level;
+    document.querySelectorAll("nav.levels button[data-level]").forEach((o) => o.setAttribute("aria-selected", String(o === b)));
+    LEVELS.forEach((k) => ($("level-" + k).hidden = k !== currentLevel));
+    renderCurrent();
+  });
+});
+function renderCurrent() { ({ 0: renderN0, 1: renderL1, 2: renderL2, 3: renderL3, 4: renderL4, 5: renderEthics, 6: renderReport })[currentLevel](); }
+function goToLevel(k) { $("tab-" + k).click(); }
+
+/* =====================================================================
+   LEVEL 1: one neuron on a 5x5 grid
+   ===================================================================== */
+const L1 = { w: new Array(25).fill(0), x: new Array(25).fill(0), th: 3, tool: 1, solved: new Set() };
+const shape = (rows) => rows.join("").split("").map((c) => (c === "#" ? 1 : 0));
+const SPECIMENS = [
+  { id: "vert", name: "Vertical line", x: shape(["..#..", "..#..", "..#..", "..#..", "..#.."]) },
+  { id: "horiz", name: "Horizontal line", x: shape([".....", ".....", "#####", ".....", "....."]) },
+  { id: "plus", name: "Plus", x: shape(["..#..", "..#..", "#####", "..#..", "..#.."]) },
+  { id: "ex", name: "X", x: shape(["#...#", ".#.#.", "..#..", ".#.#.", "#...#"]) },
+  { id: "box", name: "Box", x: shape(["#####", "#...#", "#...#", "#...#", "#####"]) },
+  { id: "slash", name: "Diagonal", x: shape(["....#", "...#.", "..#..", ".#...", "#...."]) },
+];
+const only = (id) => (f) => SPECIMENS.every((s) => f[s.id] === (s.id === id));
+const CHALLENGES = [
+  { text: "The neuron currently fires for the vertical line. Change the weights so it fires for the horizontal line and not the vertical one.", test: (f) => f.horiz && !f.vert,
+    hint: "Move the +1 weights from the middle column to the middle row." },
+  { text: "Make it fire for both the vertical and horizontal lines.", test: (f) => f.vert && f.horiz,
+    hint: "Either add more +1 weights, or keep the weights and change the threshold." },
+  { text: "Make it fire for the vertical line and nothing else in the test set.", test: only("vert"),
+    hint: "The plus contains the whole vertical line, so it gets the same weighted sum or more. Negative weights can subtract when the horizontal arms are present." },
+  { text: "Make it fire for the box and nothing else.", test: only("box"),
+    hint: "Start from all zeros. Which squares does only the box use?" },
+  { text: "Make it fire for the X and nothing else.", test: only("ex"),
+    hint: "The X and the plus share the center square. What should the center weight be?" },
+];
+const score5 = (w, x) => w.reduce((s, wi, i) => s + wi * x[i], 0);
+
+function buildGrid(el, onPaint) {
+  for (let i = 0; i < 25; i++) {
+    const b = document.createElement("button");
+    b.dataset.i = i;
+    b.setAttribute("aria-label", `row ${Math.floor(i / 5) + 1}, column ${(i % 5) + 1}`);
+    el.appendChild(b);
+  }
+  if (!onPaint) return;
+  let painting = false, value = null;
+  const cellAt = (e) => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.parentElement === el ? +t.dataset.i : null; };
+  el.addEventListener("pointerdown", (e) => { const i = cellAt(e); if (i === null) return; e.preventDefault(); painting = true; value = onPaint(i, null); });
+  el.addEventListener("pointermove", (e) => { if (painting) { const i = cellAt(e); if (i !== null) onPaint(i, value); } });
+  window.addEventListener("pointerup", () => (painting = false));
+  el.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.dataset.i) { e.preventDefault(); onPaint(+e.target.dataset.i, null); }
+  });
+}
+buildGrid($("prefs"), (i, v) => {
+  if (v === null) v = L1.w[i] === L1.tool ? 0 : L1.tool;   // clicking a square that already has this weight clears it
+  L1.w[i] = v; renderL1(); return v;
+});
+buildGrid($("drawing"), (i, v) => { if (v === null) v = L1.x[i] ? 0 : 1; L1.x[i] = v; renderL1(); return v; });
+buildGrid($("points"));
+$("points").querySelectorAll("button").forEach((b) => (b.tabIndex = -1));
+
+document.querySelectorAll(".tool").forEach((t) => t.addEventListener("click", () => {
+  L1.tool = +t.dataset.tool;
+  document.querySelectorAll(".tool").forEach((o) => o.setAttribute("aria-pressed", String(o === t)));
+}));
+$("prefs-clear").onclick = () => { L1.w.fill(0); renderL1(); };
+$("draw-clear").onclick = () => { L1.x.fill(0); renderL1(); };
+$("th-down").onclick = () => { L1.th--; renderL1(); };
+$("th-up").onclick = () => { L1.th++; renderL1(); };
+
+SPECIMENS.forEach((s) => {
+  const b = document.createElement("button");
+  b.className = "specimen"; b.id = "spec-" + s.id;
+  b.innerHTML = `<canvas width="70" height="70"></canvas><span class="name">${s.name}</span><span class="num">0</span>`;
+  b.onclick = () => { L1.x = s.x.slice(); renderL1(); };
+  $("testbench").appendChild(b);
+});
+CHALLENGES.forEach((c, k) => {
+  const li = document.createElement("li");
+  li.id = "ch-" + k;
+  li.innerHTML = `<span class="ctext">${c.text}</span><details><summary>Hint</summary>${c.hint}</details>`;
+  $("challenges").appendChild(li);
+});
+
+function drawSmall(canvas, x) {
+  const ctx = canvas.getContext("2d"), s = canvas.width / 5;
+  ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = css("--ink");
+  x.forEach((v, i) => { if (v) ctx.fillRect((i % 5) * s + 1, Math.floor(i / 5) * s + 1, s - 2, s - 2); });
+}
+function renderL1() {
+  const pb = $("prefs").children, db = $("drawing").children, qb = $("points").children;
+  for (let i = 0; i < 25; i++) {
+    const w = L1.w[i], x = L1.x[i], p = w * x;
+    pb[i].className = w > 0 ? "p1" : w < 0 ? "m1" : "";
+    pb[i].textContent = w > 0 ? "+1" : w < 0 ? "−1" : "";
+    db[i].className = x ? "on" : "";
+    db[i].setAttribute("aria-pressed", String(!!x));
+    qb[i].className = (p > 0 ? "p1" : p < 0 ? "m1" : "") + (x ? " inked" : "");
+    qb[i].textContent = p > 0 ? "+1" : p < 0 ? "−1" : x ? "0" : "";
+  }
+  const total = score5(L1.w, L1.x), lit = total >= L1.th;
+  $("total").textContent = total;
+  $("th").textContent = L1.th;
+  $("bulb").textContent = lit ? "fires" : "off";
+  $("bulb").classList.toggle("lit", lit);
+
+  const fires = {};
+  SPECIMENS.forEach((s) => {
+    const sc = score5(L1.w, s.x); fires[s.id] = sc >= L1.th;
+    const el = $("spec-" + s.id);
+    el.classList.toggle("fires", fires[s.id]);
+    el.querySelector(".num").textContent = `sum ${sc}`;
+    drawSmall(el.querySelector("canvas"), s.x);
+  });
+  // challenges unlock in order, so the starting example can't solve a later one by accident
+  let current = CHALLENGES.findIndex((_, k) => !L1.solved.has(k));
+  if (current !== -1 && CHALLENGES[current].test(fires)) { L1.solved.add(current); current = CHALLENGES.findIndex((_, k) => !L1.solved.has(k)); STORE.results.l1 = [...L1.solved]; save(); }
+  CHALLENGES.forEach((_, k) => { $("ch-" + k).classList.toggle("done", L1.solved.has(k)); $("ch-" + k).classList.toggle("now", k === current); });
+}
+
+/* =====================================================================
+   LEVEL 2: one layer of ten neurons, perceptron-style learning
+   ===================================================================== */
+const L2 = { W: Array.from({ length: 10 }, () => new Float32Array(P)), own: 0, real: 0, next: 0, selected: null, busy: false, history: [] };
+const pad2 = makePad($("pad2"), () => renderL2());
+const sums2 = (x) => L2.W.map((w) => { let s = 0; for (let i = 0; i < P; i++) s += w[i] * x[i]; return s; });
+function best2(sc) {
+  let b = 0; for (let d = 1; d < 10; d++) if (sc[d] > sc[b]) b = d;
+  return sc.every((v) => Math.abs(v - sc[b]) < 1e-9) ? null : b;   // all tied = no answer
+}
+function teach2(x, label) {
+  const guess = best2(sums2(x)), right = L2.W[label];
+  for (let i = 0; i < P; i++) right[i] += 0.2 * x[i];
+  if (guess !== label) {
+    for (let i = 0; i < P; i++) right[i] += x[i];
+    if (guess !== null) { const wrong = L2.W[guess]; for (let i = 0; i < P; i++) wrong[i] -= x[i]; }
+  }
+  return guess;
+}
+$("pad2-clear").onclick = () => { pad2.clear(); $("msg2").textContent = "Draw a digit, then click its label to train on it."; };
+$("pad2-sample").onclick = () => { const k = Math.floor(Math.random() * TRAIN_END); pad2.set(sample(k)); $("msg2").textContent = `Training example #${k + 1}, labeled ${S_LAB[k]}.`; };
+
+for (let d = 0; d < 10; d++) {
+  const b = document.createElement("button");
+  b.textContent = d; b.setAttribute("aria-label", `Train on this drawing as a ${d}`);
+  b.onclick = () => {
+    if (L2.busy) return;
+    if (pad2.isBlank()) { $("msg2").textContent = "Draw something first."; return; }
+    const guess = teach2(pad2.x, d);
+    L2.own++; L2.selected = d;
+    $("msg2").textContent = guess === d
+      ? `The answer was already ${d}. Neuron ${d}'s weights moved slightly toward this drawing.`
+      : guess === null
+        ? `Neuron ${d}'s weights moved toward this drawing.`
+        : `The answer was ${guess}. Neuron ${d}'s weights moved toward this drawing, and neuron ${guess}'s moved away from it.`;
+    renderL2();
+  };
+  $("teach2").appendChild(b);
+}
+for (let d = 0; d < 10; d++) {
+  const b = document.createElement("button");
+  b.className = "det"; b.id = "out2-" + d; b.setAttribute("aria-pressed", "false");
+  b.innerHTML = `<span class="dhead"><span class="dname">${d}</span><span class="dscore num">0</span></span><canvas width="84" height="84"></canvas><span class="bar"><i></i></span>`;
+  b.onclick = () => { L2.selected = d; renderL2(); };
+  $("outputs2").appendChild(b);
+}
+
+function renderL2() {
+  if ($("level-2").hidden) return;
+  const x = pad2.x, sc = sums2(x), best = best2(sc);
+  const globalMax = Math.max(...L2.W.map(maxAbs));
+  const scMax = Math.max(1e-9, ...sc.map(Math.abs));
+  pad2.render();
+  $("guess2").textContent = best === null ? "?" : best;
+  $("guess2-note").textContent = best === null ? (globalMax === 0 ? "All weights are 0, so every sum is 0." : "No input.") : "";
+  for (let d = 0; d < 10; d++) {
+    const el = $("out2-" + d);
+    el.classList.toggle("win", d === best);
+    el.setAttribute("aria-pressed", String(d === L2.selected));
+    el.querySelector(".dscore").textContent = sc[d].toFixed(0);
+    el.querySelector(".bar i").style.width = Math.max(0, sc[d] / scMax) * 100 + "%";
+    paintCells(el.querySelector("canvas"), L2.W[d], weightColor(globalMax));
+  }
+  const sel = L2.selected ?? best ?? 0, w = L2.W[sel], pts = new Float32Array(P);
+  for (let i = 0; i < P; i++) pts[i] = w[i] * x[i];
+  $("why2-title").textContent = `Weighted sum for neuron ${sel}: ${sc[sel].toFixed(1)}`;
+  $("why2-total").textContent = sc[sel].toFixed(1);
+  paintCells($("why2-w"), w, weightColor(maxAbs(w)), { grid: true });
+  paintCells($("why2-x"), x, inkColor, { grid: true });
+  paintCells($("why2-p"), pts, weightColor(maxAbs(pts)), { grid: true });
+  $("n-own").textContent = fmt(L2.own);
+  $("n-real").textContent = fmt(L2.real);
+}
+
+function setBusy2(b) {
+  L2.busy = b; pad2.locked = b;
+  ["study-10", "study-100", "study-1000", "forget2", "quiz2", "pad2-sample", "pad2-clear"].forEach((id) => ($(id).disabled = b));
+}
+function study2(n) {
+  if (L2.busy) return;
+  setBusy2(true);
+  const delay = n <= 10 ? 450 : 16, perTick = n <= 10 ? 1 : n <= 100 ? 2 : 25;
+  let done = 0;
+  const step = () => {
+    for (let k = 0; k < perTick && done < n; k++, done++) {
+      const idx = L2.next; L2.next = (L2.next + 1) % TRAIN_END;
+      pad2.x = Float32Array.from(sample(idx)); teach2(pad2.x, S_LAB[idx]); L2.real++;
+      $("msg2").textContent = `Training on example #${idx + 1}, labeled ${S_LAB[idx]}.`;
+    }
+    L2.selected = null; renderL2();
+    if (done < n) setTimeout(step, delay);
+    else { setBusy2(false); $("msg2").textContent = `Trained on ${fmt(n)} examples. Run the test, or draw your own.`; }
+  };
+  step();
+}
+$("study-10").onclick = () => study2(10);
+$("study-100").onclick = () => study2(100);
+$("study-1000").onclick = () => study2(1000);
+$("forget2").onclick = () => {
+  L2.W.forEach((w) => w.fill(0)); L2.own = 0; L2.real = 0; L2.next = 0; L2.history = [];
+  $("history2").innerHTML = '<span class="note">No tests run yet.</span>';
+  $("quiz2-result").textContent = ""; $("mistakes2").innerHTML = "";
+  $("msg2").textContent = "All weights reset to 0.";
+  renderL2();
+};
+$("quiz2").onclick = () => {
+  if (L2.W.every((w) => maxAbs(w) === 0)) {
+    $("quiz2-result").textContent = "All weights are 0, so every weighted sum is 0 and there's no answer. Train it first.";
+    $("mistakes2").innerHTML = ""; return;
+  }
+  let right = 0; const wrong = [];
+  for (let k = TEST_START; k < TEST_END; k++) { const g = best2(sums2(sample(k))); if (g === S_LAB[k]) right++; else wrong.push([k, g]); }
+  const total = TEST_END - TEST_START, pct = Math.round((100 * right) / total);
+  L2.history.push(pct);
+  STORE.results.l2 = L2.history.slice(); STORE.results.l2train = L2.real + L2.own; save();
+  $("history2").innerHTML = L2.history.map((p) => `<span>${p}%</span>`).join('<span class="arrow">→</span>');
+  $("quiz2-result").innerHTML = `<b>${fmt(right)} of ${fmt(total)}</b> correct (${pct}%). Random guessing would get about 10%.` + (wrong.length ? " Some it got wrong:" : "");
+  const box = $("mistakes2"); box.innerHTML = "";
+  const shown = Math.min(6, wrong.length);
+  for (let j = 0; j < shown; j++) {
+    const [k, g] = wrong[Math.floor((j * wrong.length) / shown)];
+    const b = document.createElement("button");
+    b.className = "mistake";
+    b.innerHTML = `<canvas width="56" height="56"></canvas><span>answered ${g ?? "?"}, was ${S_LAB[k]}</span>`;
+    b.onclick = () => { L2.selected = null; pad2.set(sample(k)); $("msg2").textContent = `Test example labeled ${S_LAB[k]}. Click neurons to compare their weighted sums.`; };
+    box.appendChild(b);
+    paintCells(b.querySelector("canvas"), sample(k), inkColor);
+  }
+};
+
+/* =====================================================================
+   LEVEL 3: 196 -> 16 -> 10, trained with backpropagation
+   ===================================================================== */
+const L3 = { net: new Network([196, 16, 10], seedCounter++), epochs: 0, history: [], busy: false, selected: null };
+const pad3 = makePad($("pad3"), () => renderL3());
+for (let h = 0; h < 16; h++) {
+  const b = document.createElement("button");
+  b.className = "hcell"; b.id = "h3-" + h; b.setAttribute("aria-pressed", "false");
+  b.innerHTML = `<canvas width="60" height="60"></canvas><span class="act"><i></i></span><span class="hhead"><span>#${h + 1}</span><span class="num">0.00</span></span>`;
+  b.onclick = () => { L3.selected = L3.selected === h ? null : h; renderL3(); };
+  $("hidden3").appendChild(b);
+}
+$("pad3-clear").onclick = () => pad3.clear();
+$("pad3-sample").onclick = () => pad3.set(sample(TEST_START + Math.floor(Math.random() * (TEST_END - TEST_START))));
+
+function renderL3() {
+  if ($("level-3").hidden) return;
+  const net = L3.net, { acts } = net.forward(pad3.x);
+  pad3.render();
+  const w0 = net.W[0];
+  for (let h = 0; h < 16; h++) {
+    const el = $("h3-" + h), w = w0.subarray(h * P, (h + 1) * P);
+    paintCells(el.querySelector("canvas"), w, weightColor(maxAbs(w)));
+    el.querySelector(".act i").style.width = acts[1][h] * 100 + "%";
+    el.querySelector(".num").textContent = acts[1][h].toFixed(2);
+    el.setAttribute("aria-pressed", String(h === L3.selected));
+  }
+  const best = renderBars($("bars3"), acts[2]);
+  $("guess3").textContent = pad3.isBlank() ? "?" : best;
+  $("guess3-note").textContent = pad3.isBlank() ? "No input." : `${pctStr(acts[2][best])} probability`;
+  $("ep3").textContent = L3.epochs;
+  renderChart3();
+  renderSigmoid();
+  renderBP();
+}
+
+function renderChart3() {
+  const svg = $("chart3"), W = 420, H = 190, l = 36, r = 14, t = 12, b = 28;
+  const pts = L3.history, maxE = Math.max(5, pts.length ? pts.at(-1).epoch : 0);
+  const X = (e) => l + (e / maxE) * (W - l - r), Y = (a) => t + (1 - a) * (H - t - b);
+  let s = "";
+  for (const a of [0, 0.25, 0.5, 0.75, 1]) s += `<line class="gridl" x1="${l}" x2="${W - r}" y1="${Y(a)}" y2="${Y(a)}"/><text x="${l - 6}" y="${Y(a) + 4}" text-anchor="end">${a * 100}%</text>`;
+  for (let e = 0; e <= maxE; e += maxE > 10 ? 5 : 1) s += `<text x="${X(e)}" y="${H - 8}" text-anchor="middle">${e}</text>`;
+  if (L2.history.length) {
+    const ref = Math.max(...L2.history) / 100;
+    s += `<line class="ref" x1="${l}" x2="${W - r}" y1="${Y(ref)}" y2="${Y(ref)}"/><text class="reftext" x="${W - r}" y="${Y(ref) - 5}" text-anchor="end">Level 2 best: ${Math.round(ref * 100)}%</text>`;
+  }
+  if (pts.length) {
+    const d = pts.map((p, i) => `${i ? "L" : "M"}${X(p.epoch).toFixed(1)},${Y(p.acc).toFixed(1)}`).join("");
+    s += `<path class="area" d="${d}L${X(pts.at(-1).epoch)},${Y(0)}L${X(pts[0].epoch)},${Y(0)}Z" opacity=".6"/><path class="line" d="${d}"/>`;
+    pts.forEach((p) => (s += `<circle class="dot" cx="${X(p.epoch)}" cy="${Y(p.acc)}" r="3.5"/>`));
+    const last = pts.at(-1);
+    s += `<text x="${Math.min(X(last.epoch), W - r - 30)}" y="${Y(last.acc) - 9}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${(last.acc * 100).toFixed(1)}%</text>`;
+  }
+  svg.innerHTML = s;
+}
+
+function setBusy3(b) { L3.busy = b; ["train3-1", "train3-5", "reset3", "lr3"].forEach((id) => ($(id).disabled = b)); }
+function train3(epochs) {
+  if (L3.busy) return;
+  setBusy3(true);
+  const lr = +$("lr3").value, chunk = 125;
+  let left = epochs, inEpoch = 0, lossSum = 0;
+  const tick = () => {
+    lossSum += L3.net.trainSome(chunk, lr); inEpoch += chunk;
+    if (inEpoch >= TRAIN_END) {
+      L3.epochs++;
+      const acc = L3.net.testAccuracy(), loss = lossSum / TRAIN_END;
+      L3.history.push({ epoch: L3.epochs, acc });
+      STORE.results.l3 = { epochs: L3.epochs, acc, lr }; save();
+      $("acc3").textContent = (acc * 100).toFixed(1) + "%";
+      $("loss3").textContent = isFinite(loss) ? loss.toFixed(2) : "huge";
+      inEpoch = 0; lossSum = 0; left--;
+    }
+    renderL3();
+    if (left > 0) setTimeout(tick, 16); else setBusy3(false);
+  };
+  tick();
+}
+function reset3() {
+  L3.net = new Network([196, 16, 10], seedCounter++);
+  L3.epochs = 0;
+  L3.history = [{ epoch: 0, acc: L3.net.testAccuracy() }];
+  $("acc3").textContent = (L3.history[0].acc * 100).toFixed(1) + "%";
+  $("loss3").textContent = "–";
+  renderL3();
+}
+$("train3-1").onclick = () => train3(1);
+$("train3-5").onclick = () => train3(5);
+$("reset3").onclick = reset3;
+L3.history = [{ epoch: 0, acc: L3.net.testAccuracy() }];
+$("acc3").textContent = (L3.history[0].acc * 100).toFixed(1) + "%";
+
+/* ---------- Sigmoid explainer ---------- */
+const sigmoid = (z) => 1 / (1 + Math.exp(-z));
+function renderSigmoid() {
+  const z = +$("sig-z").value, a = sigmoid(z), showStep = $("sig-step").checked;
+  const W = 420, H = 220, l = 34, r = 10, t = 12, b = 26;
+  const X = (v) => l + ((v + 8) / 16) * (W - l - r), Y = (v) => t + (1 - v) * (H - t - b);
+  let s = "";
+  for (const v of [0, 0.5, 1]) s += `<line class="gridl" x1="${l}" x2="${W - r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${l - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+  for (const v of [-8, -4, 0, 4, 8]) s += `<text x="${X(v)}" y="${H - 8}" text-anchor="middle">${v < 0 ? "−" + -v : v}</text>`;
+  if (showStep) s += `<path class="stepl" d="M${X(-8)},${Y(0)}L${X(0)},${Y(0)}L${X(0)},${Y(1)}L${X(8)},${Y(1)}"/>`;
+  let d = ""; for (let v = -8; v <= 8.001; v += 0.1) d += `${d ? "L" : "M"}${X(v).toFixed(1)},${Y(sigmoid(v)).toFixed(1)}`;
+  s += `<path class="line" d="${d}"/>`;
+  s += `<line x1="${X(z)}" x2="${X(z)}" y1="${Y(0)}" y2="${Y(a)}" style="stroke:var(--muted);stroke-dasharray:3 3"/>`;
+  s += `<circle class="dot" cx="${X(z)}" cy="${Y(a)}" r="6"/>`;
+  s += `<text x="${Math.min(Math.max(X(z), l + 30), W - r - 30)}" y="${Y(a) - 12}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${a.toFixed(2)}</text>`;
+  $("sigchart").innerHTML = s;
+  $("sig-zv").textContent = (z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
+  $("sig-av").textContent = a.toFixed(a > 0.995 || a < 0.005 ? 3 : 2);
+}
+$("sig-z").addEventListener("input", renderSigmoid);
+$("sig-step").addEventListener("change", renderSigmoid);
+
+/* ---------- Backpropagation walkthrough (uses the Level 3 network's real numbers) ---------- */
+const BP_STEPS = ["1. Guess", "2. Output error", "3. Output weights", "4. Back to hidden layer", "5. Hidden weights", "6. Apply"];
+const BP = { k: 0, step: 0, out: null, hid: null, applied: null };
+function bpPick() {
+  BP.k = Math.floor(Math.random() * TRAIN_END);
+  BP.out = S_LAB[BP.k]; BP.hid = null; BP.applied = null;
+}
+bpPick();
+BP_STEPS.forEach((name, i) => {
+  const b = document.createElement("button");
+  b.textContent = name; b.setAttribute("aria-pressed", "false");
+  b.onclick = () => { BP.step = i; renderBP(); };
+  $("bp-tabs").appendChild(b);
+});
+$("bp-prev").onclick = () => { BP.step = Math.max(0, BP.step - 1); renderBP(); };
+$("bp-next").onclick = () => { BP.step = Math.min(BP_STEPS.length - 1, BP.step + 1); renderBP(); };
+$("bp-new").onclick = () => { bpPick(); BP.step = 0; renderBP(); };
+
+const sgn = (v, d = 2) => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(d);
+function dbars(rows, opts = {}) {
+  // rows: [{label, value, sel?, id?}] drawn around a center line; blue = up, orange = down
+  const max = Math.max(1e-9, ...rows.map((r) => Math.abs(r.value)));
+  return `<div class="dbars">` + rows.map((r, i) => {
+    const w = (Math.abs(r.value) / max) * 50, pos = r.value >= 0 ? `left:50%;width:${w}%;background:var(--plus)` : `right:50%;width:${w}%;background:var(--minus)`;
+    const tag = opts.clickable ? "button" : "div";
+    return `<${tag} class="r${r.sel ? " sel" : ""}" ${opts.clickable ? `data-i="${i}"` : ""}><span>${r.label}</span><span class="track"><i style="${pos}"></i></span><span class="v">${sgn(r.value, opts.digits ?? 2)}</span></${tag}>`;
+  }).join("") + `</div>`;
+}
+
+function bpCompute() {
+  const net = L3.net, x = sample(BP.k), y = S_LAB[BP.k];
+  const { acts } = net.forward(x), h = acts[1], p = acts[2], W1 = net.W[1];
+  const dOut = Array.from({ length: 10 }, (_, j) => (j === y ? 1 : 0) - p[j]);   // desired change of each output
+  const pass = Array.from({ length: 16 }, (_, i) => dOut.reduce((s, d, j) => s + W1[j * 16 + i] * d, 0));
+  const slope = Array.from(h, (a) => a * (1 - a));
+  const dHid = pass.map((v, i) => v * slope[i]);                                   // desired change of each hidden neuron
+  return { x, y, h, p, W1, dOut, pass, slope, dHid };
+}
+
+function renderBP() {
+  if ($("level-3").hidden) return;
+  const c = bpCompute(), lr = +$("lr3").value;
+  if (BP.hid === null) BP.hid = c.dHid.reduce((b, v, i, a) => (Math.abs(v) > Math.abs(a[b]) ? i : b), 0);
+  [...$("bp-tabs").children].forEach((b, i) => b.setAttribute("aria-pressed", String(i === BP.step)));
+  $("bp-prev").disabled = BP.step === 0; $("bp-next").disabled = BP.step === BP_STEPS.length - 1;
+  paintCells($("bp-x"), c.x, inkColor, { grid: true });
+  $("bp-xcap").textContent = `Training example #${BP.k + 1}. Label: ${c.y}`;
+  const body = $("bp-body");
+  const lossNow = -Math.log(Math.max(1e-9, c.p[c.y]));
+
+  if (BP.step === 0) {
+    let best = 0; for (let d = 1; d < 10; d++) if (c.p[d] > c.p[best]) best = d;
+    body.innerHTML = `<p>First the network runs forward, exactly as in the panels above: pixels → 16 hidden neurons → 10 outputs. This is the <span class="term">forward pass</span>.</p>
+      <p>The correct answer is <b>${c.y}</b>. The network's answer is <b>${best}</b>, and it gives ${c.y} a probability of <b>${pctStr(c.p[c.y])}</b>.</p>
+      <div class="bars" id="bp-bars" style="max-width:380px"></div>`;
+    renderBars($("bp-bars"), c.p);
+  } else if (BP.step === 1) {
+    body.innerHTML = `<p>Each output has a value it should have had: 100% for the correct digit (${c.y}) and 0% for the other nine. The <b>desired change</b> is the difference between wanted and actual. Blue bars should go up and orange bars should go down.</p>
+      ${dbars(c.dOut.map((d, j) => ({ label: `${j}: got ${pctStr(c.p[j])}, want ${j === c.y ? "100%" : "0%"}`, value: d, sel: j === c.y })))}
+      <p class="note">The loss for this example is ${lossNow.toFixed(2)}. Everything that follows tries to make the desired changes happen, which lowers the loss.</p>`;
+  } else if (BP.step === 2) {
+    const j = BP.out, rows = Array.from({ length: 16 }, (_, i) => ({ label: `hidden #${i + 1} (activation ${c.h[i].toFixed(2)})`, value: c.dOut[j] * c.h[i] }));
+    body.innerHTML = `<p>Look at one output neuron. Pick which: <span class="pick" id="bp-outpick"></span></p>
+      <p>Output ${j} has a desired change of <b>${sgn(c.dOut[j])}</b>. Each of its 16 incoming weights changes by <b>desired change × activation of the hidden neuron at the other end</b>. A hidden neuron that was strongly active had a big effect on this output, so its weight changes a lot. A hidden neuron near 0 had almost no effect, so its weight barely changes.</p>
+      ${dbars(rows, { digits: 3 })}
+      <p class="note">These numbers are then multiplied by the learning rate (${lr}) before they're applied. The bias changes by the desired change alone. The same happens for all 10 output neurons: 160 weights and 10 biases.</p>`;
+    const pk = $("bp-outpick");
+    for (let d = 0; d < 10; d++) { const b = document.createElement("button"); b.textContent = d; b.setAttribute("aria-pressed", String(d === j)); b.onclick = () => { BP.out = d; renderBP(); }; pk.appendChild(b); }
+  } else if (BP.step === 3) {
+    const i = BP.hid;
+    const rows = Array.from({ length: 16 }, (_, k) => ({ label: `hidden #${k + 1}`, value: c.dHid[k], sel: k === i }));
+    const parts = c.dOut.map((d, j) => `<tr><td>output ${j}: desired change ${sgn(d)} × weight ${sgn(c.W1[j * 16 + i])}</td><td class="num">${sgn(d * c.W1[j * 16 + i], 3)}</td></tr>`).join("");
+    body.innerHTML = `<p>Now the hidden layer. The training data only says what the outputs should be. It says nothing about the hidden neurons. Instead, each output neuron passes its desired change backward along its connection, multiplied by that connection's weight. A hidden neuron adds up what all 10 outputs pass back. This backward flow is the "back" in backpropagation.</p>
+      <p>Click a hidden neuron to see its calculation.</p>
+      ${dbars(rows, { clickable: true, digits: 3 })}
+      <table class="calc"><tbody>${parts}
+        <tr><td>Sum of what the outputs passed back</td><td class="num">${sgn(c.pass[i], 3)}</td></tr>
+        <tr><td>× slope of the sigmoid at this neuron (activation ${c.h[i].toFixed(2)})</td><td class="num">× ${c.slope[i].toFixed(3)}</td></tr>
+        <tr class="total"><td>Desired change for hidden #${i + 1}</td><td class="num">${sgn(c.dHid[i], 3)}</td></tr></tbody></table>
+      <p class="note">The slope is how steep the S-curve is where this neuron sits. It is largest (0.25) at activation 0.5 and close to 0 when the activation is near 0 or 1. A neuron that is firmly off or firmly on is hard to change, so it gets a smaller share.</p>`;
+    body.querySelectorAll(".dbars button.r").forEach((b) => (b.onclick = () => { BP.hid = +b.dataset.i; renderBP(); }));
+  } else if (BP.step === 4) {
+    const i = BP.hid, w = L3.net.W[0].subarray(i * P, (i + 1) * P), dw = new Float32Array(P);
+    for (let k = 0; k < P; k++) dw[k] = c.dHid[i] * c.x[k];
+    body.innerHTML = `<p>Look at one hidden neuron. Pick which: <span class="pick" id="bp-hidpick"></span></p>
+      <p>Hidden #${i + 1} has a desired change of <b>${sgn(c.dHid[i], 3)}</b>. Each of its 196 weights changes by <b>desired change × that pixel's ink</b>, the same rule as step 3. Blank pixels contributed nothing to this neuron, so their weights don't change. Only the inked pixels' weights move.</p>
+      <div class="why3">
+        <figure><canvas id="bp-w"></canvas><figcaption class="note">Current weights</figcaption></figure>
+        <figure><canvas id="bp-xx"></canvas><figcaption class="note">Input</figcaption></figure>
+        <figure><canvas id="bp-dw"></canvas><figcaption class="note">Change to each weight</figcaption></figure>
+      </div>
+      <p class="note">This happens for all 16 hidden neurons: 3,136 weights and 16 biases, each multiplied by the learning rate (${lr}).</p>`;
+    const pk = $("bp-hidpick");
+    for (let k = 0; k < 16; k++) { const b = document.createElement("button"); b.textContent = k + 1; b.setAttribute("aria-pressed", String(k === i)); b.onclick = () => { BP.hid = k; renderBP(); }; pk.appendChild(b); }
+    paintCells($("bp-w"), w, weightColor(maxAbs(w)), { grid: true });
+    paintCells($("bp-xx"), c.x, inkColor, { grid: true });
+    paintCells($("bp-dw"), dw, weightColor(maxAbs(dw)), { grid: true });
+  } else {
+    const a = BP.applied;
+    body.innerHTML = `<p>Every weight and bias in the network now gets its change, multiplied by the learning rate. That completes one training step on one example.</p>
+      <div class="row"><button class="btn solid" id="bp-apply">Apply this step to the network</button></div>
+      ${a ? `<p>Done. The probability of ${a.y} for this example went from <b>${pctStr(a.before)}</b> to <b>${pctStr(a.after)}</b>. Its loss went from ${a.lossBefore.toFixed(2)} to ${a.lossAfter.toFixed(2)}. Click Apply again to take another step on the same example.</p>` : ""}
+      <p>Training is this procedure repeated for every example in the training set: 5,000 steps per epoch. Each step improves the network a little on one example. Because the examples differ, the changes that survive are the ones that help on many of them.</p>
+      <p class="note">The general method, taking small steps in whichever direction lowers the loss, is called <span class="term">gradient descent</span>. Backpropagation is the part that works out the direction for every weight.</p>`;
+    $("bp-apply").onclick = () => {
+      const before = c.p[c.y];
+      L3.net.trainOne(c.x, c.y, lr);
+      const after = L3.net.forward(c.x).acts[2][c.y];
+      BP.applied = { y: c.y, before, after, lossBefore: -Math.log(before), lossAfter: -Math.log(after) };
+      renderL3();
+    };
+  }
+}
+
+/* =====================================================================
+   LEVEL 4: 196 -> 16 -> 16 -> 10, network diagram + training timeline
+   ===================================================================== */
+// Every training action is saved as a step, so the history slider can go back to any earlier state.
+// Training after going back discards the later steps, like undo.
+const L4 = { net: null, steps: [], cur: 0, busy: false, mode: "w", selected: null, hits: [] };
+const pad4 = makePad($("pad4"), () => renderL4());
+
+function reset4() {
+  L4.net = new Network([196, 16, 16, 10], seedCounter++);
+  L4.steps = [{ label: "random weights", kind: "start", seen: 0, own: 0, acc: L4.net.testAccuracy(), state: L4.net.snapshot() }];
+  showStep(0);
+}
+function addStep(label, kind) {
+  const prev = L4.steps[L4.cur];
+  L4.steps = L4.steps.slice(0, L4.cur + 1);
+  L4.steps.push({ label, kind, seen: L4.net.seen, own: prev.own + (kind === "own" ? 1 : 0), acc: L4.net.testAccuracy(), state: L4.net.snapshot() });
+  const last = L4.steps.at(-1);
+  STORE.results.l4 = { steps: L4.steps.length - 1, seen: last.seen, own: last.own, acc: last.acc }; save();
+  showStep(L4.steps.length - 1);
+}
+function showStep(i) {
+  L4.cur = i;
+  const s = L4.steps[i];
+  L4.net.restore(s.state); L4.net.seen = s.seen;
+  const tl = $("timeline4"); tl.max = L4.steps.length - 1; tl.value = i;
+  $("tl4-step").textContent = `Step ${i} of ${L4.steps.length - 1}: ${s.label}`;
+  $("tl4-acc").textContent = `Test accuracy: ${(s.acc * 100).toFixed(1)}%`;
+  $("tl4-seen").textContent = `${fmt(s.seen)} example${s.seen === 1 ? "" : "s"} seen in total` + (s.seen >= 50 ? ` (${+(s.seen / TRAIN_END).toFixed(2)} epochs)` : "") + (s.own ? `, ${fmt(s.own)} of them your drawings` : "") + "." +
+    (i < L4.steps.length - 1 ? " Training from here will erase the later steps." : "");
+  renderChart4();
+  renderL4();
+}
+$("timeline4").addEventListener("input", (e) => { if (!L4.busy) showStep(+e.target.value); });
+
+function renderChart4() {
+  const svg = $("chart4"), W = 520, H = 150, l = 36, r = 10, t = 10, b = 10;
+  const steps = L4.steps, n = Math.max(steps.length - 1, 1);
+  const X = (i) => l + (i / n) * (W - l - r), Y = (a) => t + (1 - a) * (H - t - b);
+  let s = "";
+  for (const a of [0, 0.5, 1]) s += `<line class="gridl" x1="${l}" x2="${W - r}" y1="${Y(a)}" y2="${Y(a)}"/><text x="${l - 6}" y="${Y(a) + 4}" text-anchor="end">${a * 100}%</text>`;
+  const d = steps.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p.acc).toFixed(1)}`).join("");
+  s += `<path class="line" d="${d}" style="stroke-width:2"/>`;
+  steps.forEach((p, i) => {
+    const color = p.kind === "own" ? "var(--minus)" : p.kind === "start" ? "var(--muted)" : "var(--plus)";
+    s += `<circle cx="${X(i)}" cy="${Y(p.acc)}" r="${i === L4.cur ? 6 : 3.5}" style="fill:${i === L4.cur ? "var(--surface)" : color};stroke:${color};stroke-width:${i === L4.cur ? 3 : 0}"><title>Step ${i}: ${p.label}, ${(p.acc * 100).toFixed(1)}%</title></circle>`;
+  });
+  svg.innerHTML = s;
+}
+
+function setBusy4(b) {
+  L4.busy = b; pad4.locked = b;
+  ["reset4", "lr4", "pad4-clear", "pad4-sample", "timeline4"].forEach((id) => ($(id).disabled = b));
+  document.querySelectorAll("#train4-btns button, #teach4 button").forEach((x) => (x.disabled = b));
+}
+function trainReal4(n, onDone) {
+  if (L4.busy) return;
+  setBusy4(true);
+  const lr = +$("lr4").value, start = L4.net.seen;
+  // small batches are shown one example at a time on the input pad; large ones run in chunks
+  const show = n <= 10, delay = show ? 350 : 16, chunk = show ? 1 : Math.min(250, Math.ceil(n / 20));
+  let done = 0;
+  const tick = () => {
+    if (show) {
+      L4.net.trainSome(1, lr);
+      const k = L4.net.order[L4.net.pos - 1];
+      pad4.x = Float32Array.from(sample(k));
+      $("msg4").textContent = `Training on example #${k + 1}, labeled ${S_LAB[k]}.`;
+      done++;
+    } else {
+      const m = Math.min(chunk, n - done); L4.net.trainSome(m, lr); done += m;
+      $("tl4-seen").textContent = `Training: ${fmt(done)} of ${fmt(n)} examples…`;
+    }
+    renderL4();
+    if (done < n) setTimeout(tick, delay);
+    else {
+      setBusy4(false);
+      addStep(`trained on ${fmt(n)} real example${n === 1 ? "" : "s"}`, "real");
+      if (onDone) onDone();
+      if (show) $("msg4").textContent = `Trained on ${n} real example${n === 1 ? "" : "s"}.`;
+    }
+  };
+  tick();
+}
+document.querySelectorAll("#train4-btns button").forEach((b) => (b.onclick = () => trainReal4(+b.dataset.n)));
+
+for (let d = 0; d < 10; d++) {
+  const b = document.createElement("button");
+  b.textContent = d; b.setAttribute("aria-label", `Train on this drawing as a ${d}`);
+  b.onclick = () => {
+    if (L4.busy) return;
+    if (pad4.isBlank()) { $("msg4").textContent = "Draw something first."; return; }
+    const before = L4.net.forward(pad4.x).acts[3][d];
+    const accBefore = L4.steps[L4.cur].acc;
+    L4.net.trainOne(pad4.x, d, +$("lr4").value); L4.net.seen++;
+    const after = L4.net.forward(pad4.x).acts[3][d];
+    addStep(`trained on your drawing, labeled ${d}`, "own");
+    const accAfter = L4.steps[L4.cur].acc;
+    const accChange = Math.abs(accAfter - accBefore) < 0.0005 ? "did not change" : `went from ${(accBefore * 100).toFixed(1)}% to ${(accAfter * 100).toFixed(1)}%`;
+    $("msg4").textContent = `One backpropagation step. For this drawing, the probability of ${d} went from ${pctStr(before)} to ${pctStr(after)}. Test accuracy ${accChange}. One epoch is 5,000 of these steps.`;
+  };
+  $("teach4").appendChild(b);
+}
+
+$("reset4").onclick = () => { if (!L4.busy) { reset4(); $("msg4").textContent = "New random weights. Every step of training history was erased."; } };
+$("mode-w").onclick = () => { L4.mode = "w"; $("mode-w").setAttribute("aria-pressed", "true"); $("mode-s").setAttribute("aria-pressed", "false"); renderL4(); };
+$("mode-s").onclick = () => { L4.mode = "s"; $("mode-s").setAttribute("aria-pressed", "true"); $("mode-w").setAttribute("aria-pressed", "false"); renderL4(); };
+$("pad4-clear").onclick = () => pad4.clear();
+$("pad4-sample").onclick = () => {
+  const k = Math.floor(Math.random() * TRAIN_END);
+  pad4.set(sample(k));
+  $("msg4").textContent = `Training example #${k + 1}, labeled ${S_LAB[k]}.`;
+};
+
+const LAYER_NAMES = ["Input", "Hidden layer 1", "Hidden layer 2", "Output"];
+const TOP_LINES = 6;   // strongest incoming connections drawn per neuron
+
+function renderL4() {
+  if ($("level-4").hidden || !L4.net) return;
+  const net = L4.net, { acts, sums } = net.forward(pad4.x);
+  pad4.render();
+  const out = acts[3]; let best = 0; for (let d = 1; d < 10; d++) if (out[d] > out[best]) best = d;
+  $("guess4").textContent = best;
+  $("guess4-note").textContent = `${pctStr(out[best])} probability` + (pad4.isBlank() ? " (for a blank picture)" : "");
+
+  const c = $("net4"), ctx = sizeCanvas(c), dpr = window.devicePixelRatio || 1;
+  const W = c.width / dpr, H = c.height / dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+  const ink = css("--ink"), muted = css("--muted"), line = css("--line"), plus = css("--plus"), minus = css("--minus"), surface = css("--surface"), glow = css("--glow");
+
+  // layout: input picture on the left, then three columns of circles
+  const top = 26, bottom = H - 14, imgSize = Math.min(W * 0.2, (bottom - top) * 0.55);
+  const imgX = 8, imgY = (top + bottom) / 2 - imgSize / 2;
+  const colX = [imgX + imgSize, W * 0.43, W * 0.64, W * 0.84];
+  const counts = [0, 16, 16, 10];
+  const pos = [[], [], [], []];
+  for (let l = 1; l <= 3; l++) {
+    const n = counts[l], span = bottom - top, gap = span / n;
+    for (let j = 0; j < n; j++) pos[l].push([colX[l], top + gap * (j + 0.5)]);
+  }
+  const rad = Math.max(5, Math.min(13, (bottom - top) / 16 / 2 - 2));
+  // input pixel centres
+  const cell = imgSize / N;
+  for (let i = 0; i < P; i++) pos[0].push([imgX + (i % N + 0.5) * cell, imgY + (Math.floor(i / N) + 0.5) * cell]);
+
+  // connections
+  const sel = L4.selected;
+  const drawLayerLines = (l) => {      // lines into layer l from layer l-1
+    const nin = net.sizes[l - 1], nout = net.sizes[l], w = net.W[l - 1], a = acts[l - 1];
+    const val = (j, i) => (L4.mode === "w" ? w[j * nin + i] : w[j * nin + i] * a[i]);
+    let max = 0; for (let j = 0; j < nout; j++) for (let i = 0; i < nin; i++) max = Math.max(max, Math.abs(val(j, i)));
+    if (!max) return;
+    for (let j = 0; j < nout; j++) {
+      const focus = sel && sel[0] === l && sel[1] === j;
+      if (l === 1 && !focus) continue;            // 3,136 input lines are drawn only for the selected neuron
+      const idx = Array.from({ length: nin }, (_, i) => i).sort((p, q) => Math.abs(val(j, q)) - Math.abs(val(j, p)));
+      const keep = focus ? nin : TOP_LINES;
+      for (let k = 0; k < keep; k++) {
+        const i = idx[k], v = val(j, i), m = Math.abs(v) / max;
+        if (m < 0.03) continue;
+        const dim = sel && !focus && !(sel[0] === l - 1 && sel[1] === i) ? 0.25 : 1;
+        ctx.globalAlpha = Math.min(1, (0.15 + 0.85 * m) * dim);
+        ctx.strokeStyle = v >= 0 ? plus : minus;
+        ctx.lineWidth = l === 1 ? 0.6 + 1.2 * m : 0.5 + 3 * m;
+        const [x0, y0] = l === 1 ? pos[0][i] : [pos[l - 1][i][0] + rad, pos[l - 1][i][1]];
+        const [x1, y1] = [pos[l][j][0] - rad, pos[l][j][1]];
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+  };
+  [2, 3, 1].forEach(drawLayerLines);
+
+  // input picture
+  for (let i = 0; i < P; i++) {
+    ctx.fillStyle = surface; ctx.fillRect(imgX + (i % N) * cell, imgY + Math.floor(i / N) * cell, cell, cell);
+    ctx.globalAlpha = pad4.x[i]; ctx.fillStyle = ink;
+    ctx.fillRect(imgX + (i % N) * cell, imgY + Math.floor(i / N) * cell, cell + 0.3, cell + 0.3);
+    ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.strokeRect(imgX, imgY, imgSize, imgSize);
+
+  // neurons
+  L4.hits = [];
+  ctx.font = `600 11px ${css("--font-body")}`; ctx.textAlign = "center";
+  for (let l = 1; l <= 3; l++) {
+    pos[l].forEach(([x, y], j) => {
+      const a = acts[l][j];
+      ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2);
+      ctx.fillStyle = surface; ctx.fill();
+      ctx.globalAlpha = a; ctx.fillStyle = l === 3 && j === best ? glow : ink; ctx.fill(); ctx.globalAlpha = 1;
+      const isSel = sel && sel[0] === l && sel[1] === j;
+      ctx.lineWidth = isSel ? 3 : 1.2; ctx.strokeStyle = isSel ? plus : muted; ctx.stroke();
+      L4.hits.push({ l, j, x, y });
+      if (l === 3) {
+        ctx.textAlign = "left"; ctx.fillStyle = ink; ctx.font = `800 ${Math.round(rad * 1.3)}px ${css("--font-display")}`;
+        ctx.fillText(j, x + rad + 8, y + rad * 0.45);
+        ctx.font = `400 11px ${css("--font-body")}`; ctx.fillStyle = muted;
+        ctx.fillText(pctStr(a), x + rad + 8 + rad * 1.3, y + 4);
+      }
+    });
+  }
+  ctx.textAlign = "center"; ctx.fillStyle = muted; ctx.font = `700 10px ${css("--font-body")}`;
+  ctx.fillText("INPUT 14×14", imgX + imgSize / 2, top - 10);
+  ["", "HIDDEN 1", "HIDDEN 2", "OUTPUT"].forEach((t, l) => l && ctx.fillText(t, colX[l], top - 10));
+
+  renderDetail4(acts, sums);
+}
+
+$("net4").addEventListener("click", (e) => {
+  const r = $("net4").getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  let hit = null, bestD = 22;
+  for (const h of L4.hits) { const d = Math.hypot(h.x - x, h.y - y); if (d < bestD) { bestD = d; hit = h; } }
+  L4.selected = hit ? [hit.l, hit.j] : null;
+  renderL4();
+});
+
+function renderDetail4(acts, sums) {
+  const body = $("detail4-body"), sel = L4.selected;
+  if (!sel) { $("detail4-title").textContent = "Neuron details"; body.className = "note"; body.textContent = "Click a neuron in the diagram to see its weights and the full calculation for the current input."; return; }
+  const [l, j] = sel, net = L4.net, nin = net.sizes[l - 1], w = net.W[l - 1].subarray(j * nin, (j + 1) * nin), a = acts[l - 1];
+  const bias = net.B[l - 1][j], z = sums[l - 1][j];
+  const name = l === 3 ? `Output neuron for digit ${j}` : `${LAYER_NAMES[l]}, neuron #${j + 1}`;
+  $("detail4-title").textContent = name;
+  body.className = "";
+  let wsum = 0; for (let i = 0; i < nin; i++) wsum += w[i] * a[i];
+  // show rounded parts and a total that adds up from them, so the arithmetic checks out on screen
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const shown = r2(r2(wsum) + r2(bias));
+  const signed = (v, plus = "") => (v < 0 ? "−" : plus) + Math.abs(v).toFixed(2);
+  const contrib = Array.from({ length: nin }, (_, i) => [i, w[i] * a[i]]).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1])).slice(0, 4);
+  const srcName = (i) => (l === 1 ? `pixel (row ${Math.floor(i / N) + 1}, col ${(i % N) + 1}): ink` : l === 2 ? `hidden-1 #${i + 1}: activation` : `hidden-2 #${i + 1}: activation`);
+  const rows = contrib.map(([i, v]) => `<tr><td>${srcName(i)} ${a[i].toFixed(2)} × weight ${signed(w[i])}</td><td class="num">${signed(v, "+")}</td></tr>`).join("");
+  const finalRow = l === 3
+    ? `<tr class="total"><td>Probability after softmax (compared with the other 9 outputs)</td><td class="num">${pctStr(acts[l][j])}</td></tr>`
+    : `<tr class="total"><td>Activation = sigmoid(${signed(shown)})</td><td class="num">${acts[l][j].toFixed(2)}</td></tr>`;
+  const table = `<table class="calc"><tbody>
+    <tr><td colspan="2" class="note">The 4 largest of ${nin} inputs × weights:</td></tr>${rows}
+    <tr><td>Weighted sum of all ${nin} inputs</td><td class="num">${signed(r2(wsum))}</td></tr>
+    <tr><td>+ bias</td><td class="num">${signed(r2(bias), "+")}</td></tr>
+    <tr><td>= total</td><td class="num">${signed(shown)}</td></tr>${finalRow}</tbody></table>`;
+  if (l === 1) {
+    body.innerHTML = `<div class="detail-grid"><figure style="margin:0;display:grid;gap:4px"><canvas id="detail4-img" width="150" height="150"></canvas><figcaption class="note">Its 196 weights</figcaption></figure><div>${table}</div></div>`;
+    paintCells($("detail4-img"), w, weightColor(maxAbs(w)), { grid: true });
+  } else {
+    body.innerHTML = table;
+  }
+}
+
+/* =====================================================================
+   START: one biological-style neuron with three inputs, shown as a cell and as math
+   ===================================================================== */
+const N0 = { fire: [1, 1, 0], w: [1, 1, 1], th: 2, solved: new Set(STORE.results.n0 || []) };
+const N0_NAMES = ["A", "B", "C"];
+const n0Fires = (f) => f.reduce((s, v, i) => s + v * N0.w[i], 0) >= N0.th;
+const COMBOS = Array.from({ length: 8 }, (_, m) => [(m >> 2) & 1, (m >> 1) & 1, m & 1]);
+const ruleIs = (rule) => () => COMBOS.every((f) => n0Fires(f) === rule(...f.map(Boolean)));
+const N0_CHALLENGES = [
+  { text: "Make the neuron fire whenever A fires, and stay off whenever A is silent, no matter what B and C do.", test: ruleIs((a) => a),
+    hint: "Give A a synapse strong enough to reach the threshold by itself, and make B and C too weak to matter." },
+  { text: "Make it fire only when A and B both fire.", test: ruleIs((a, b) => a && b),
+    hint: "Each of A and B alone should fall short of the threshold. Together they should reach it." },
+  { text: "Make it fire when A fires, B fires, or both.", test: ruleIs((a, b) => a || b),
+    hint: "Either one alone should be enough to reach the threshold." },
+  { text: "Make C an off switch: fire when A fires, but never when C fires.", test: ruleIs((a, b, c) => a && !c),
+    hint: "This is what inhibitory synapses do. Give C a negative strength." },
+  { text: "Make it fire when exactly one of A and B fires, but not both. Try it, then read the hint.", test: ruleIs((a, b) => a !== b),
+    hint: "No single neuron can do this. Whatever strengths you choose, A and B together always add up to at least as much as the larger of them alone. It takes two layers of neurons. Marvin Minsky and Seymour Papert's 1969 book Perceptrons made this limit famous. It's one reason networks have hidden layers (Level 3)." },
+];
+N0_CHALLENGES.forEach((c, k) => {
+  const li = document.createElement("li"); li.id = "n0ch-" + k;
+  li.innerHTML = `<span class="ctext">${c.text}</span><details><summary>Hint</summary>${c.hint}</details>`;
+  $("n0-challenges").appendChild(li);
+});
+N0_NAMES.forEach((name, i) => {
+  const r = document.createElement("div"); r.className = "mrow";
+  r.innerHTML = `<button class="tog" id="n0-tog-${i}" aria-pressed="false"></button><span class="num" id="n0-in-${i}" style="text-align:center"></span><span>×</span>
+    <span class="stepper"><button id="n0-wd-${i}" aria-label="Weaken synapse ${name}">−</button><output id="n0-w-${i}" class="num"></output><button id="n0-wu-${i}" aria-label="Strengthen synapse ${name}">+</button></span>
+    <span>=</span><span class="prod" id="n0-p-${i}"></span>`;
+  $("mathrows").appendChild(r);
+  $("n0-tog-" + i).onclick = () => { N0.fire[i] ^= 1; renderN0(); };
+  $("n0-wd-" + i).onclick = () => { N0.w[i] = Math.max(-3, N0.w[i] - 1); renderN0(); };
+  $("n0-wu-" + i).onclick = () => { N0.w[i] = Math.min(3, N0.w[i] + 1); renderN0(); };
+});
+const sumRow = document.createElement("div"); sumRow.className = "msum"; sumRow.innerHTML = `<span>Weighted sum</span><span class="num" id="n0-sum"></span>`;
+$("mathrows").appendChild(sumRow);
+$("n0-th-down").onclick = () => { N0.th = Math.max(-3, N0.th - 1); renderN0(); };
+$("n0-th-up").onclick = () => { N0.th = Math.min(9, N0.th + 1); renderN0(); };
+const signedInt = (v) => (v > 0 ? "+" + v : v < 0 ? "−" + -v : "0");
+
+function renderN0() {
+  const sum = N0.fire.reduce((s, v, i) => s + v * N0.w[i], 0), on = sum >= N0.th;
+  N0_NAMES.forEach((name, i) => {
+    $("n0-tog-" + i).textContent = N0.fire[i] ? `${name} fires` : `${name} silent`;
+    $("n0-tog-" + i).setAttribute("aria-pressed", String(!!N0.fire[i]));
+    $("n0-in-" + i).textContent = N0.fire[i];
+    $("n0-w-" + i).textContent = signedInt(N0.w[i]);
+    $("n0-p-" + i).textContent = signedInt(N0.fire[i] * N0.w[i]);
+  });
+  $("n0-sum").textContent = `${sum} ${on ? "≥" : "<"} ${N0.th}`;
+  $("n0-th").textContent = N0.th;
+  $("n0-bulb").textContent = on ? "fires" : "off";
+  $("n0-bulb").classList.toggle("lit", on);
+
+  // biological diagram
+  const glow = "var(--glow)", line = "var(--line)", ys = [55, 150, 245], sy = [105, 150, 195];
+  let s = "";
+  N0_NAMES.forEach((name, i) => {
+    const f = N0.fire[i], w = N0.w[i];
+    s += `<path d="M77,${ys[i]} C150,${ys[i]} 150,${sy[i]} 207,${sy[i]}" fill="none" stroke="${f ? glow : line}" stroke-width="${f ? 4 : 2.5}" class="${f ? "fire-pulse" : ""}"/>`;
+    const ang = Math.atan2(sy[i] - 150, 222 - 285);   // dendrite runs from the synapse to the edge of the cell body
+    s += `<line x1="222" y1="${sy[i]}" x2="${(285 + 42 * Math.cos(ang)).toFixed(1)}" y2="${(150 + 40 * Math.sin(ang)).toFixed(1)}" stroke="var(--muted)" stroke-width="3"/>`;
+    const r = 3 + 2.4 * Math.abs(w), col = w > 0 ? "var(--plus)" : w < 0 ? "var(--minus)" : "var(--surface)";
+    s += `<circle cx="215" cy="${sy[i]}" r="${r}" fill="${col}" stroke="${w ? col : "var(--muted)"}" stroke-width="1.5"/>`;
+    s += `<text x="215" y="${sy[i] - r - 5}" text-anchor="middle">${signedInt(w)}</text>`;
+    s += `<g class="up" role="button" tabindex="0" data-i="${i}" aria-label="Toggle neuron ${name}"><circle cx="55" cy="${ys[i]}" r="22" fill="${f ? glow : "var(--surface)"}" stroke="${f ? glow : "var(--muted)"}" stroke-width="2"/><text class="uplabel" x="55" y="${ys[i] + 6}" text-anchor="middle">${name}</text></g>`;
+  });
+  s += `<ellipse cx="285" cy="150" rx="42" ry="40" fill="${on ? glow : "var(--surface)"}" stroke="${on ? glow : "var(--muted)"}" stroke-width="2.5"/>`;
+  s += `<text x="285" y="146" text-anchor="middle" style="fill:var(--ink);font-weight:700">sum ${sum}</text><text x="285" y="163" text-anchor="middle" style="fill:var(--ink)">needs ${N0.th}</text>`;
+  s += `<path d="M327,150 L465,150 M465,150 L500,124 M465,150 L505,150 M465,150 L500,176" fill="none" stroke="${on ? glow : line}" stroke-width="${on ? 5 : 3}" class="${on ? "fire-pulse" : ""}"/>`;
+  s += `<text x="215" y="${sy[2] + 32}" text-anchor="middle">synapses</text><text x="285" y="214" text-anchor="middle">cell body</text><text x="400" y="138" text-anchor="middle">axon</text><text x="55" y="290" text-anchor="middle">other neurons</text>`;
+  $("bio").innerHTML = s;
+  $("bio").querySelectorAll(".up").forEach((g) => {
+    const t = () => { N0.fire[+g.dataset.i] ^= 1; renderN0(); };
+    g.addEventListener("click", t);
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); t(); } });
+  });
+
+  // truth table
+  let tt = `<thead><tr><th>A</th><th>B</th><th>C</th><th>Sum</th><th>Fires?</th></tr></thead><tbody>`;
+  COMBOS.forEach((f) => {
+    const sm = f.reduce((a, v, i) => a + v * N0.w[i], 0), fo = sm >= N0.th, cur = f.every((v, i) => v === N0.fire[i]);
+    tt += `<tr class="${cur ? "cur" : ""}"><td>${f[0]}</td><td>${f[1]}</td><td>${f[2]}</td><td>${sm}</td><td class="${fo ? "on" : ""}">${fo ? "yes" : "no"}</td></tr>`;
+  });
+  $("truth").innerHTML = tt + "</tbody>";
+
+  let current = N0_CHALLENGES.findIndex((_, k) => !N0.solved.has(k));
+  if (current !== -1 && N0_CHALLENGES[current].test()) { N0.solved.add(current); STORE.results.n0 = [...N0.solved]; save(); current = N0_CHALLENGES.findIndex((_, k) => !N0.solved.has(k)); }
+  N0_CHALLENGES.forEach((_, k) => { $("n0ch-" + k).classList.toggle("done", N0.solved.has(k)); $("n0ch-" + k).classList.toggle("now", k === current); });
+}
+
+/* =====================================================================
+   Lab report questions, one panel at the end of each tab
+   ===================================================================== */
+const QUESTIONS = [
+  { id: "q0", level: "0", text: "In your own words, what does an artificial neuron do? Name one way it's different from a real neuron." },
+  { id: "q1", level: "1", text: "Challenge 3 needed negative weights. Why couldn't you solve it with positive weights only?" },
+  { id: "q2", level: "2", text: "Run the test and look at the mistakes. Pick one and explain why the network might have made it, using the weight pictures." },
+  { id: "q3a", level: "3", text: "Level 3 scored higher on the test set than Level 2. What does the hidden layer let the network do that one layer can't?" },
+  { id: "q3b", level: "3", text: "Explain backpropagation in two or three sentences, for someone who hasn't done this lab." },
+  { id: "q4a", level: "4", text: "Starting from random weights, how many training examples did it take before the network read your digit correctly? What happened when you trained it on your own drawings one at a time?" },
+  { id: "q4b", level: "4", text: "What did the network do when you drew something that isn't a digit? Why could that be a problem in a real system?" },
+  { id: "q5a", level: "5", text: "Look at the network's mistake and its 3,594 numbers. Can you explain why it made the mistake? What would it take to explain a decision made by a system with 175 billion parameters?" },
+  { id: "q5b", level: "5", text: "How did the network do on your handwriting compared with its test accuracy? Describe a real situation where a gap like this could harm someone." },
+  { id: "q5c", level: "5", text: "Who should pay the environmental costs of training and running large AI models, and who should get to decide whether they're worth it?" },
+  { id: "q5d", level: "5", text: "What question about AI do you want to investigate in your project?" },
+];
+const LEVEL_TITLES = { 0: "Start", 1: "Level 1", 2: "Level 2", 3: "Level 3", 4: "Level 4", 5: "Ethics" };
+["0", "1", "2", "3", "4", "5"].forEach((lv) => {
+  const qs = QUESTIONS.filter((q) => q.level === lv);
+  const panel = document.createElement("div");
+  panel.className = "panel qpanel";
+  panel.innerHTML = `<span class="label">Lab report question${qs.length > 1 ? "s" : ""}</span>` + qs.map((q) =>
+    `<div class="q"><label for="ans-${q.id}">${q.text}</label><textarea class="answer" id="ans-${q.id}" rows="4"></textarea></div>`).join("");
+  $("level-" + lv).appendChild(panel);
+  qs.forEach((q) => {
+    const ta = $("ans-" + q.id);
+    ta.value = STORE.answers[q.id] || "";
+    ta.addEventListener("input", () => { STORE.answers[q.id] = ta.value; save(); });
+  });
+});
+
+/* =====================================================================
+   ETHICS
+   ===================================================================== */
+const l4Trained = () => L4.steps[L4.cur].acc >= 0.8;
+const BB = { k: null };
+function gateTrain(btn) {
+  btn.disabled = true; btn.textContent = "Training…";
+  trainReal4(10000, () => { btn.disabled = false; btn.textContent = "Train the Level 4 network for 2 epochs"; renderEthics(); });
+}
+$("bb-train").onclick = () => gateTrain($("bb-train"));
+$("hw-train").onclick = () => gateTrain($("hw-train"));
+
+function l4Mistakes() {
+  const out = [];
+  for (let k = TEST_START; k < TEST_END; k++) { const g = L4.net.predict(sample(k)); if (g !== S_LAB[k]) out.push(k); }
+  return out;
+}
+$("bb-next").onclick = () => { const m = l4Mistakes(); BB.k = m[Math.floor(Math.random() * m.length)]; renderBlackBox(); };
+$("bb-open").onclick = () => { if (BB.k !== null) { pad4.set(sample(BB.k)); goToLevel("4"); } };
+
+function renderBlackBox() {
+  const trained = l4Trained();
+  $("bb-gate").hidden = trained; $("bb-main").hidden = !trained;
+  if (!trained) return;
+  if (BB.k === null || L4.net.predict(sample(BB.k)) === S_LAB[BB.k]) { const m = l4Mistakes(); BB.k = m.length ? m[Math.floor(Math.random() * m.length)] : null; }
+  if (BB.k === null) { $("bb-text").textContent = "The network got every test example right."; return; }
+  const x = sample(BB.k), p = L4.net.forward(x).acts[3], y = S_LAB[BB.k];
+  let g = 0; for (let d = 1; d < 10; d++) if (p[d] > p[g]) g = d;
+  paintCells($("bb-img"), x, inkColor, { grid: true });
+  $("bb-text").innerHTML = `This test digit is labeled <b>${y}</b>. The network answered <b>${g}</b> with ${pctStr(p[g])} probability, and gave ${y} ${p[y] < 0.005 ? "less than 1%" : "only " + pctStr(p[y])}.`;
+  // every parameter as one square, each layer's weights and biases scaled separately
+  const groups = []; L4.net.W.forEach((w, l) => groups.push(w, L4.net.B[l]));
+  const total = groups.reduce((s, a) => s + a.length, 0), side = Math.ceil(Math.sqrt(total));
+  const c = $("bb-params"); c.width = side; c.height = side;
+  const ctx = c.getContext("2d"), plus = css("--plus"), minus = css("--minus");
+  ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, side, side);
+  let n = 0;
+  groups.forEach((arr) => {
+    const m = maxAbs(arr) || 1;
+    for (const v of arr) { ctx.globalAlpha = Math.min(1, Math.abs(v) / m * 1.4); ctx.fillStyle = v >= 0 ? plus : minus; ctx.fillRect(n % side, Math.floor(n / side), 1, 1); n++; }
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* handwriting test: does the network read this student's digits? */
+const HW = { results: STORE.results.hw || [] };
+const pad5 = makePad($("pad5"), () => pad5.render());
+$("hw-clear").onclick = () => pad5.clear();
+$("hw-restart").onclick = () => { HW.results = []; STORE.results.hw = []; save(); pad5.clear(); renderHandwriting(); };
+$("hw-check").onclick = () => {
+  if (HW.results.length >= 10) return;
+  if (pad5.isBlank()) { $("hw-summary").textContent = "Draw the digit first."; return; }
+  const target = HW.results.length, guess = L4.net.predict(pad5.x);
+  HW.results.push({ target, guess, img: Array.from(pad5.x, (v) => Math.round(v * 255)) });
+  if (HW.results.length === 10) STORE.results.hwTestAcc = L4.steps[L4.cur].acc;
+  STORE.results.hw = HW.results; save();
+  pad5.clear(); renderHandwriting();
+};
+function renderHandwriting() {
+  const trained = l4Trained();
+  $("hw-gate").hidden = trained; $("hw-main").hidden = !trained;
+  if (!trained) return;
+  pad5.render();
+  const n = HW.results.length;
+  $("hw-target").textContent = n < 10 ? n : "✓";
+  $("hw-progress").textContent = n < 10 ? `Digit ${n + 1} of 10` : "Done";
+  $("hw-check").disabled = n >= 10;
+  const box = $("hw-results"); box.innerHTML = "";
+  HW.results.forEach((r) => {
+    const f = document.createElement("figure"); f.className = r.guess === r.target ? "ok" : "bad";
+    f.innerHTML = `<canvas width="40" height="40"></canvas><figcaption>read ${r.guess}</figcaption>`;
+    box.appendChild(f);
+    paintCells(f.querySelector("canvas"), r.img.map((v) => v / 255), inkColor);
+  });
+  if (n === 10) {
+    const right = HW.results.filter((r) => r.guess === r.target).length;
+    $("hw-summary").innerHTML = `The network read <b>${right} of your 10 digits</b> correctly (${right * 10}%). Its accuracy on the MNIST test set is ${(STORE.results.hwTestAcc * 100).toFixed(1)}%.`;
+  } else $("hw-summary").textContent = "";
+}
+
+function renderEnv() {
+  const sec = COMPUTE.ms / 1000;
+  $("env-ops").textContent = COMPUTE.ops >= 1e9 ? (COMPUTE.ops / 1e9).toFixed(2) + " billion" : COMPUTE.ops >= 1e6 ? (COMPUTE.ops / 1e6).toFixed(1) + " million" : fmt(COMPUTE.ops);
+  $("env-time").textContent = sec.toFixed(1) + " s";
+  $("env-wh").textContent = ((15 * sec) / 3600).toFixed(3);
+}
+// keep the running total saved, and live on the Ethics tab
+let lastSavedOps = COMPUTE.ops;
+setInterval(() => {
+  if (COMPUTE.ops !== lastSavedOps) { STORE.results.compute = { ops: COMPUTE.ops, ms: COMPUTE.ms }; save(); lastSavedOps = COMPUTE.ops; }
+  if (currentLevel === "5") renderEnv();
+}, 1000);
+
+function renderEthics() { renderBlackBox(); renderHandwriting(); renderEnv(); }
+
+/* =====================================================================
+   LAB REPORT: summary, PDF download, copy as text
+   ===================================================================== */
+$("rep-name").value = STORE.name; $("rep-class").value = STORE.cls;
+$("rep-name").addEventListener("input", (e) => { STORE.name = e.target.value; save(); });
+$("rep-class").addEventListener("input", (e) => { STORE.cls = e.target.value; save(); });
+
+function reportResults() {
+  const R = STORE.results, rows = [];
+  rows.push(["Start challenges", `${(R.n0 || []).filter((k) => k < 4).length} of 4 solved`]);
+  rows.push(["Level 1 challenges", `${(R.l1 || []).length} of 5 solved`]);
+  rows.push(["Level 2 test scores", R.l2 && R.l2.length ? R.l2.map((p) => p + "%").join(", ") + ` (after ${fmt(R.l2train || 0)} training examples)` : "No test run"]);
+  rows.push(["Level 3", R.l3 ? `${(R.l3.acc * 100).toFixed(1)}% test accuracy after ${R.l3.epochs} epoch${R.l3.epochs === 1 ? "" : "s"} (learning rate ${R.l3.lr})` : "Not trained"]);
+  rows.push(["Level 4", R.l4 ? `${(R.l4.acc * 100).toFixed(1)}% test accuracy after ${fmt(R.l4.seen)} examples, ${fmt(R.l4.own)} of them your drawings, in ${R.l4.steps} training step${R.l4.steps === 1 ? "" : "s"}` : "Not trained"]);
+  const hw = R.hw || [];
+  rows.push(["Handwriting test", hw.length === 10 ? `${hw.filter((r) => r.guess === r.target).length} of 10 read correctly (network's MNIST test accuracy: ${(R.hwTestAcc * 100).toFixed(1)}%)` : hw.length ? `${hw.length} of 10 digits done` : "Not done"]);
+  rows.push(["Calculations", `${fmt(COMPUTE.ops)} multiply-and-add operations`]);
+  return rows;
+}
+function renderReport() {
+  $("rep-results").innerHTML = reportResults().map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  const box = $("rep-answers"); box.innerHTML = "";
+  QUESTIONS.forEach((q) => {
+    const a = (STORE.answers[q.id] || "").trim(), d = document.createElement("div");
+    d.className = "ans";
+    d.innerHTML = `<span class="label">${LEVEL_TITLES[q.level]}</span><span class="qt"></span>` + (a ? `<span class="at"></span>` : `<span class="missing">Not answered yet. <button class="btn" style="padding:2px 10px">Go to question</button></span>`);
+    d.querySelector(".qt").textContent = q.text;
+    if (a) d.querySelector(".at").textContent = a;
+    else d.querySelector("button").onclick = () => { goToLevel(q.level); const ta = $("ans-" + q.id); ta.scrollIntoView({ block: "center" }); ta.focus(); };
+    box.appendChild(d);
+  });
+}
+
+function reportText() {
+  const lines = ["Digit Network Lab report", `Name: ${STORE.name || "(no name)"}`, `Class period: ${STORE.cls || "(none)"}`, `Date: ${new Date().toLocaleDateString("en-US")}`, "", "RESULTS"];
+  reportResults().forEach(([k, v]) => lines.push(`${k}: ${v}`));
+  lines.push("", "ANSWERS");
+  QUESTIONS.forEach((q) => lines.push("", `${LEVEL_TITLES[q.level]}: ${q.text}`, (STORE.answers[q.id] || "").trim() || "(not answered)"));
+  return lines.join("\n");
+}
+$("rep-copy").onclick = async () => {
+  const text = reportText();
+  try { await navigator.clipboard.writeText(text); $("rep-msg").textContent = "Copied. Paste it into the Canvas text box."; $("rep-fallback").hidden = true; }
+  catch (e) { const ta = $("rep-fallback"); ta.hidden = false; ta.value = text; ta.focus(); ta.select(); $("rep-msg").textContent = "Copying was blocked. The text is selected below: press Ctrl+C (Cmd+C on a Mac) to copy it."; }
+};
+
+// jsPDF's built-in fonts only cover basic Latin characters, so swap the few symbols this page uses
+const pdfSafe = (t) => t.replace(/−/g, "-").replace(/→/g, "->").replace(/×/g, "x").replace(/≥/g, ">=").replace(/₂/g, "2").replace(/…/g, "...");
+$("rep-pdf").onclick = () => {
+  if (!window.jspdf) { $("rep-msg").textContent = "The PDF tool didn't load (check the internet connection). Use \"Copy as text\" instead."; return; }
+  if (!STORE.name.trim()) { $("rep-msg").textContent = "Add your name first."; $("rep-name").focus(); return; }
+  const doc = new window.jspdf.jsPDF({ unit: "pt", format: "letter" });
+  const M = 54, W = 612 - 2 * M, H = 792;
+  let y = M;
+  const need = (h) => { if (y + h > H - M) { doc.addPage(); y = M; } };
+  const text = (t, size = 10.5, style = "normal", gap = 4) => {
+    doc.setFont("helvetica", style); doc.setFontSize(size);
+    doc.splitTextToSize(pdfSafe(t), W).forEach((ln) => { need(size * 1.35); doc.text(ln, M, y + size); y += size * 1.35; });
+    y += gap;
+  };
+  text("Digit Network Lab report", 18, "bold", 2);
+  text(`${STORE.name}${STORE.cls ? " | Period " + STORE.cls : ""} | ${new Date().toLocaleDateString("en-US")}`, 11, "normal", 14);
+  text("Results", 13, "bold", 2);
+  reportResults().forEach(([k, v]) => text(`${k}: ${v}`, 10.5, "normal", 1));
+  const hw = STORE.results.hw || [];
+  if (hw.length) {
+    y += 8; text("Handwriting test (your drawings, and what the network read)", 10.5, "bold", 4);
+    need(70);
+    const sz = 40, gap = (W - 10 * sz) / 9;
+    hw.forEach((r, i) => {
+      const x0 = M + i * (sz + gap), cell = sz / N;
+      doc.setDrawColor(r.guess === r.target ? 35 : 212, r.guess === r.target ? 130 : 112, r.guess === r.target ? 79 : 26); doc.setLineWidth(1.2); doc.rect(x0, y, sz, sz);
+      r.img.forEach((v, p) => { if (v > 12) { const g = 255 - v; doc.setFillColor(g, g, g); doc.rect(x0 + (p % N) * cell, y + Math.floor(p / N) * cell, cell, cell, "F"); } });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.text(`${r.target} -> ${r.guess}`, x0 + sz / 2, y + sz + 10, { align: "center" });
+    });
+    y += sz + 22;
+  }
+  y += 6; text("Answers", 13, "bold", 4);
+  QUESTIONS.forEach((q) => {
+    text(`${LEVEL_TITLES[q.level]}: ${q.text}`, 10.5, "bold", 2);
+    text((STORE.answers[q.id] || "").trim() || "(not answered)", 10.5, "normal", 10);
+  });
+  const slug = STORE.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "student";
+  try { doc.save(`digit-network-lab-${slug}.pdf`); $("rep-msg").textContent = "PDF downloaded. Upload it to the Canvas assignment."; }
+  catch (e) { $("rep-msg").textContent = "The download was blocked. Use \"Copy as text\" instead."; }
+};
+
+/* =====================================================================
+   Start-up and theme handling
+   ===================================================================== */
+const rerender = () => renderCurrent();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rerender);
+new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+let resizeTimer; window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(rerender, 100); });
+
+L1.w = shape(["..#..", "..#..", "..#..", "..#..", "..#.."]);
+L1.x = SPECIMENS[0].x.slice();
+// restore saved progress
+(STORE.results.l1 || []).forEach((k) => L1.solved.add(k));
+if (STORE.results.l2 && STORE.results.l2.length) {
+  L2.history = STORE.results.l2.slice();
+  $("history2").innerHTML = L2.history.map((p) => `<span>${p}%</span>`).join('<span class="arrow">→</span>');
+}
+reset4();
+renderL1();
+renderN0();
+</script>
+</body>
+</html>
