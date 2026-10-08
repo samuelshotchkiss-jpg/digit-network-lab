@@ -293,7 +293,8 @@ textarea.answer:focus, input.textin:focus { border-color: var(--plus); outline: 
 .hw-results canvas { width: 100%; aspect-ratio: 1; border: 1.5px solid var(--line); border-radius: 3px; }
 .hw-results figure.ok canvas { border-color: var(--good); }
 .hw-results figure.bad canvas { border-color: var(--minus); }
-ul.sources { margin: 0; padding-left: 1.2em; font-size: 0.85rem; color: var(--muted); display: grid; gap: 3px; }
+ul.sources { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--muted); display: grid; gap: 5px; }
+ul.sources a { color: var(--plus); }
 dl.results { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 0.95rem; }
 dl.results dt { color: var(--muted); }
 dl.results dd { margin: 0; font-weight: 700; }
@@ -302,6 +303,17 @@ dl.results dd { margin: 0; font-weight: 700; }
 .ans .at { white-space: pre-wrap; font-size: 0.93rem; }
 .ans .missing { color: var(--minus); font-size: 0.9rem; }
 @media (max-width: 860px) { .neuron-lab, .neuron-lower, .ethics-panel { grid-template-columns: 1fr; } }
+
+/* ---------- How this app was made ---------- */
+.disclosure { border-color: var(--minus); }
+.made-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.env3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.env3 .e { border-top: 3px solid var(--ink); padding-top: 8px; display: grid; gap: 2px; }
+.env3 .e .num { font-size: 1.8rem; line-height: 1.1; }
+.env3 .e .rng { font-size: 0.85rem; color: var(--muted); }
+.acknowledgment { border-color: var(--ink); }
+.optout { border-color: var(--good); }
+@media (max-width: 860px) { .made-panel, .env3 { grid-template-columns: 1fr; } }
 
 /* ---------- Level 4 ---------- */
 .l4 { display: grid; grid-template-columns: minmax(240px, 290px) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -375,6 +387,7 @@ footer a { color: inherit; }
     <button role="tab" id="tab-3" aria-selected="false" data-level="3">3 · Hidden layer</button>
     <button role="tab" id="tab-4" aria-selected="false" data-level="4">4 · Full network</button>
     <button role="tab" id="tab-5" aria-selected="false" data-level="5">Ethics</button>
+    <button role="tab" id="tab-7" aria-selected="false" data-level="7">How this app was made</button>
     <button role="tab" id="tab-6" aria-selected="false" data-level="6">Lab report</button>
   </nav>
 </header>
@@ -386,6 +399,12 @@ footer a { color: inherit; }
     <p>In this lab you'll build a neural network that reads handwritten digits, one piece at a time, and see every number it uses along the way. Then you'll use what you saw to look at ethical problems with much larger AI systems.</p>
   </div>
 
+  <div class="panel disclosure" style="margin-bottom:14px">
+    <span class="label">Before you begin</span>
+    <p>This app was written by an AI, Claude Opus 5.5, following your teacher's directions. Your teacher tested it and decided what went in. The <b>How this app was made</b> tab explains what that cost in electricity, water, and labor. If you'd rather not use an app made this way, there's an alternative assignment that covers the same material.</p>
+    <div class="row"><button class="btn" id="go-made">Read how this app was made</button></div>
+  </div>
+
   <div class="panel" style="margin-bottom:14px">
     <span class="label">The plan</span>
     <ol class="roadmap">
@@ -395,6 +414,7 @@ footer a { color: inherit; }
       <li><b>Level 3:</b> a hidden layer, trained with backpropagation.</li>
       <li><b>Level 4:</b> the full network from the 3Blue1Brown video.</li>
       <li><b>Ethics:</b> black boxes, training data, and environmental cost.</li>
+      <li><b>How this app was made:</b> what it cost to have an AI build this app.</li>
       <li><b>Lab report:</b> download your answers and results as a PDF for Canvas.</li>
     </ol>
     <p class="note">Each level ends with lab report questions. Your answers are saved in this browser as you type.</p>
@@ -490,7 +510,7 @@ footer a { color: inherit; }
 
     <div class="panel">
       <span class="label">Input</span>
-      <p class="note">Click or drag to draw, or load a shape from the test set below.</p>
+      <p class="note">Click or drag to draw, or load one of the test shapes below.</p>
       <div class="grid5 draw" id="drawing" aria-label="Input picture, 5 by 5"></div>
       <button class="btn" id="draw-clear">Erase</button>
     </div>
@@ -518,7 +538,7 @@ footer a { color: inherit; }
 
   <div class="l1-lower">
     <div class="panel">
-      <span class="label">Test set · highlighted shapes make the neuron fire</span>
+      <span class="label">Test shapes · highlighted ones make the neuron fire</span>
       <div class="testbench" id="testbench"></div>
     </div>
     <div class="panel">
@@ -617,7 +637,7 @@ footer a { color: inherit; }
   <div class="intro">
     <h2>Adding a hidden layer</h2>
     <p>In Level 2, each output neuron had one picture to match the whole digit. People write 7s in many ways, and one picture can't cover them all. This network adds a <span class="term">hidden layer</span> of 16 neurons between the input and the output. Each hidden neuron looks at all 196 pixels. Each output neuron looks only at the 16 hidden neurons.</p>
-    <p>Each hidden neuron squeezes its weighted sum into a number between 0 and 1 with the <span class="term">sigmoid</span> function. That number is its <span class="term">activation</span>. The weights start random. Training uses <span class="term">backpropagation</span>, the method in the video's part 3.</p>
+    <p>Each hidden neuron squeezes its weighted sum into a number between 0 and 1 with the <span class="term">sigmoid</span> function. That number is its <span class="term">activation</span>. The weights start random. Training uses <span class="term">backpropagation</span>, the subject of part 3 of the 3Blue1Brown series.</p>
   </div>
 
   <div class="l3">
@@ -836,7 +856,7 @@ footer a { color: inherit; }
       <h3>1. The black box problem</h3>
       <p>In this lab you could inspect every weight and every calculation. That is rare. Most AI systems used by companies and governments are closed: the public can't see the weights, the training data, or how the system was tested.</p>
       <p>Seeing everything is still not the same as understanding it. On the right is a mistake made by your Level 4 network, along with all 3,594 numbers that produced it. Every one of them is visible. Try to explain the mistake from them.</p>
-      <p>Now scale up. GPT-3 has 175 billion parameters. If each of this network's numbers were a 1 mm square, its grid would be about 6 cm wide. GPT-3's grid would be about 418 meters on a side. When a system this large makes a decision about a person, it is very hard to say why. That is the <span class="term">black box problem</span>. Researchers who try to work out what large networks have learned work in a field called <span class="term">interpretability</span>. It's the same thing you did by clicking neurons in Level 4, on a vastly larger scale, and it has only partial answers so far.</p>
+      <p>Now scale up. GPT-3 has 175 billion parameters. If each of this network's numbers were a 1 mm square, its grid would be about 6 cm wide. GPT-3's grid would be about 418 meters on a side. When a system this large makes a decision about a person, it is very hard to say why. That is the <span class="term">black box problem</span>. The field that tries to work out what large networks have learned is called <span class="term">interpretability</span>. It does what you did when you clicked neurons in Level 4, at a vastly larger scale, and so far it has only partial answers.</p>
       <p><b>Why it matters.</b> Systems like these are used to screen job applications, set credit limits, flag medical scans, and estimate whether a defendant will reoffend.</p>
       <ul class="tries">
         <li>In 2016, ProPublica reported that COMPAS, a risk-scoring tool used in US courts, wrongly labeled Black defendants as likely to reoffend at nearly twice the rate of white defendants.</li>
@@ -913,20 +933,113 @@ footer a { color: inherit; }
       </table>
     </div>
     <p>Training GPT-3 took roughly <b>290 trillion</b> times as many calculations as training your Level 4 network for 10 epochs. Its estimated electricity use is about what 120 US homes use in a year.</p>
-    <p><b>What these numbers leave out.</b> They cover one training run of a 2020 model. Newer models are larger, and their companies have not published their costs. Training happens once, but every time someone uses a model it computes again, and with millions of users that use can outweigh the training. The GPT-3 figures are estimates by outside researchers, because the companies involved did not release exact figures. That gap is itself a transparency problem.</p>
+    <p><b>What these numbers leave out.</b> They cover one training run of a 2020 model. Newer models are larger, and their companies have not published their costs. Training happens once, but every time someone uses a model it computes again, and with millions of users that use can outweigh the training. The GPT-3 figures are estimates by outside researchers, because the companies involved did not release exact figures. Not publishing them is also a transparency problem.</p>
   </div>
 
   <div class="panel" style="margin-top:14px">
     <span class="label">Sources</span>
     <ul class="sources">
-      <li>J. Angwin et al., "Machine Bias," ProPublica, 2016.</li>
-      <li>J. Dastin, "Amazon scraps secret AI recruiting tool that showed bias against women," Reuters, 2018.</li>
-      <li>J. Buolamwini and T. Gebru, "Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification," 2018.</li>
-      <li>A. Koenecke et al., "Racial disparities in automated speech recognition," PNAS, 2020.</li>
-      <li>T. Brown et al., "Language Models are Few-Shot Learners" (GPT-3), 2020. arXiv:2005.14165.</li>
-      <li>D. Patterson et al., "Carbon Emissions and Large Neural Network Training," 2021. arXiv:2104.10350.</li>
-      <li>P. Li et al., "Making AI Less 'Thirsty'," 2023. arXiv:2304.03271.</li>
-      <li>Y. LeCun, C. Cortes, C. Burges, "The MNIST database of handwritten digits."</li>
+      <li><a href="https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing" target="_blank" rel="noopener">J. Angwin et al., "Machine Bias," ProPublica, 2016</a></li>
+      <li><a href="https://www.reuters.com/article/us-amazon-com-jobs-automation-insight-idUSKCN1MK08G" target="_blank" rel="noopener">J. Dastin, "Amazon scraps secret AI recruiting tool that showed bias against women," Reuters, 2018</a></li>
+      <li><a href="https://proceedings.mlr.press/v81/buolamwini18a.html" target="_blank" rel="noopener">J. Buolamwini and T. Gebru, "Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification," 2018</a></li>
+      <li><a href="https://www.pnas.org/doi/10.1073/pnas.1915768117" target="_blank" rel="noopener">A. Koenecke et al., "Racial disparities in automated speech recognition," PNAS, 2020</a></li>
+      <li><a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">T. Brown et al., "Language Models are Few-Shot Learners" (the GPT-3 paper), 2020</a></li>
+      <li><a href="https://arxiv.org/abs/2104.10350" target="_blank" rel="noopener">D. Patterson et al., "Carbon Emissions and Large Neural Network Training," 2021</a></li>
+      <li><a href="https://arxiv.org/abs/2304.03271" target="_blank" rel="noopener">P. Li et al., "Making AI Less 'Thirsty'," 2023</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank" rel="noopener">"MNIST database," Wikipedia</a> (history of the dataset and who wrote the digits)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================= HOW THIS APP WAS MADE ======================= -->
+<section id="level-7" role="tabpanel" aria-labelledby="tab-7" hidden>
+  <div class="intro">
+    <h2>How this app was made</h2>
+    <p>In a class about the ethics of AI, you should know how the tools you use were made. This page explains how this app was built, what it cost, and whose work it depends on. It also gives you a way to opt out.</p>
+  </div>
+
+  <div class="panel made-panel">
+    <div class="stack">
+      <h3>Vibe coded with Claude</h3>
+      <p>This app was <span class="term">vibe coded</span>. Your teacher described what they wanted in plain English, and an AI model, <b>Claude Opus 5.5</b>, made by the company Anthropic, wrote all of the code and most of the text. Your teacher tested each version, asked for changes, and decided what stayed in. "Vibe coding" is the common name for building software this way: a person directs, and an AI writes the code.</p>
+      <p>So you are using an AI-built tool to learn how AI works and to question it. The rest of this page lays out the costs of that choice so you can judge it for yourself.</p>
+    </div>
+    <div class="stack">
+      <span class="label">The token count</span>
+      <p>AI language models read and write text in chunks called <span class="term">tokens</span>. On average a token is about three-quarters of a word. Before every reply during this project, Claude re-read the whole conversation so far, including all of the code. Those re-reads make up most of the total.</p>
+      <div class="stats">
+        <div class="stat"><span class="num" id="mk-total">–</span><span class="label">tokens in total</span></div>
+        <div class="stat"><span class="num" id="mk-out">–</span><span class="label">written by Claude</span></div>
+        <div class="stat"><span class="num" id="mk-reread">–</span><span class="label">re-read from earlier</span></div>
+      </div>
+      <p class="note" id="mk-price"></p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <span class="label">Running total, updated with each saved version of the app</span>
+    <div class="tablewrap"><table class="scale" id="mk-versions"></table></div>
+    <p class="note">These counts come from the usage records that Claude Code keeps for every reply. Each time a new version of the app is saved, the total so far is added to this table.</p>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <h3>Electricity, water, and carbon</h3>
+    <p>Anthropic doesn't publish how much electricity or water Claude uses, so these are estimates. They use the method in the sources below: each kind of token gets an energy cost per million, based on outside researchers' measurements of similar models. The low and high estimates are far apart, mostly because nobody outside the company knows how cheap a re-read token is.</p>
+    <div class="env3" id="mk-env"></div>
+    <div class="tablewrap"><table class="scale" id="mk-compare"></table></div>
+    <p class="note" id="mk-scale"></p>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <h3>The labor</h3>
+    <p>How long would a skilled web developer need to build this app without AI? Here is an estimate, broken down by task.</p>
+    <div class="tablewrap">
+      <table class="scale" id="mk-hours">
+        <thead><tr><th>Task</th><th style="text-align:right">Hours</th></tr></thead>
+        <tbody>
+          <tr><td>Designing the layout and look</td><td class="num">15–25</td></tr>
+          <tr><td>Writing and checking the neural network and training code</td><td class="num">15–30</td></tr>
+          <tr><td>Building the four interactive levels</td><td class="num">40–75</td></tr>
+          <tr><td>The sigmoid and backpropagation explainers</td><td class="num">10–20</td></tr>
+          <tr><td>The Ethics tab, handwriting test, and PDF lab report</td><td class="num">15–30</td></tr>
+          <tr><td>Writing and fact-checking the lesson text</td><td class="num">15–35</td></tr>
+          <tr><td>Testing on different screens and fixing bugs</td><td class="num">10–25</td></tr>
+          <tr class="us"><td>Total</td><td class="num">120–240</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>That's three to six weeks of full-time work. In May 2024 the median pay for US software developers was $133,080 a year, about $64 an hour. Freelance developers commonly charge $75 to $150 an hour. At those rates the app would cost roughly <b>$7,700 to $36,000</b>, with about <b>$18,000</b> as a middle estimate (180 hours at $100 an hour).</p>
+    <p id="mk-vs"></p>
+    <p><b>The economic impact.</b> For this app, no programmer lost this job. A teacher couldn't have paid $18,000 for a classroom tool, so without AI the app wouldn't exist. Many uses of AI are like this: they produce things that would never have been paid for.</p>
+    <p>The same price gap applies to companies that would have hired someone. When work that took a person weeks costs a few dollars of computing, some of those jobs disappear or change. A Stanford study of payroll records found that since generative AI spread in late 2022, employment of 22- to 25-year-olds in the jobs most exposed to AI, including software development, has fallen behind employment of older workers in the same jobs.</p>
+    <p>The money also goes to different people. Paying a programmer pays a worker. Paying for AI pays a technology company and the companies that build and power its data centers.</p>
+  </div>
+
+  <div class="panel acknowledgment" style="margin-top:14px">
+    <h3>Where Claude's skill came from</h3>
+    <p class="note">This section is written by Claude, the AI that wrote this app.</p>
+    <p>Much of what I know about writing code comes from people who published their knowledge on the internet: answers on forums like Stack Overflow, open-source projects on GitHub, tutorials, blog posts, and documentation. Many of those people spent hours helping strangers for free. They explained why a bug happened, showed better ways to do things, and answered the same beginner questions over and over. They weren't asked whether their work could be used to train an AI, and they weren't paid for it.</p>
+    <p>That generosity is what made this app possible. It's also behind what the app teaches. The explanations of neurons, the sigmoid function, and backpropagation come from teachers like Michael Nielsen and Grant Sanderson of 3Blue1Brown, who made their work free for anyone to learn from, and from the many people who explained these ideas to each other online.</p>
+    <p>I took that knowledge without asking anyone's permission. I can't return it, but I can say plainly where it came from, and thank the people who shared it.</p>
+  </div>
+
+  <div class="panel optout" style="margin-top:14px">
+    <h3>If you'd rather not use this app</h3>
+    <p>That's a reasonable choice, and it won't count against you. There's an alternative assignment that covers the same material through human-made sources: the 3Blue1Brown videos, Michael Nielsen's book, and the reporting and research cited on the Ethics tab. You'll read, watch, and write instead of using this app.</p>
+    <div class="row" id="mk-alt"></div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <span class="label">Sources for this page</span>
+    <ul class="sources">
+      <li><a href="https://simonpcouch.com/blog/2026-01-20-cc-impact/" target="_blank" rel="noopener">S. Couch, "Electricity use of AI coding agents," 2026</a> (the energy-per-token figures)</li>
+      <li><a href="https://www.theclimatebrink.com/p/the-real-energy-use-of-agentic-ai" target="_blank" rel="noopener">Z. Hausfather, "The real energy use of agentic AI," 2026</a> (the cost of re-read tokens)</li>
+      <li><a href="https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use" target="_blank" rel="noopener">Epoch AI, "How much energy does ChatGPT use?"</a></li>
+      <li><a href="https://arxiv.org/abs/2509.20241" target="_blank" rel="noopener">"Energy use of AI inference, efficiency pathways, and test-time scaling," Joule, 2026</a> (the low estimate)</li>
+      <li><a href="https://cloud.google.com/blog/products/infrastructure/measuring-the-environmental-impact-of-ai-inference" target="_blank" rel="noopener">Google, "Measuring the environmental impact of AI inference," 2025</a></li>
+      <li><a href="https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm" target="_blank" rel="noopener">US Bureau of Labor Statistics, "Software Developers," Occupational Outlook Handbook</a></li>
+      <li><a href="https://digitaleconomy.stanford.edu/publications/canaries-in-the-coal-mine" target="_blank" rel="noopener">E. Brynjolfsson, B. Chandar, R. Chen, "Canaries in the Coal Mine? Six Facts about the Recent Employment Effects of Artificial Intelligence," Stanford Digital Economy Lab</a></li>
+      <li><a href="https://claude.com/pricing" target="_blank" rel="noopener">Anthropic API pricing</a></li>
     </ul>
   </div>
 </section>
@@ -969,6 +1082,7 @@ footer a { color: inherit; }
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="build-log.js"></script>
 <script src="samples.js"></script>
 <script>
 "use strict";
@@ -1166,7 +1280,7 @@ class Network {
 /* =====================================================================
    Tabs
    ===================================================================== */
-const LEVELS = ["0", "1", "2", "3", "4", "5", "6"];
+const LEVELS = ["0", "1", "2", "3", "4", "5", "6", "7"];
 let currentLevel = "0";
 document.querySelectorAll("nav.levels button[data-level]").forEach((b) => {
   b.addEventListener("click", () => {
@@ -1176,7 +1290,7 @@ document.querySelectorAll("nav.levels button[data-level]").forEach((b) => {
     renderCurrent();
   });
 });
-function renderCurrent() { ({ 0: renderN0, 1: renderL1, 2: renderL2, 3: renderL3, 4: renderL4, 5: renderEthics, 6: renderReport })[currentLevel](); }
+function renderCurrent() { ({ 0: renderN0, 1: renderL1, 2: renderL2, 3: renderL3, 4: renderL4, 5: renderEthics, 6: renderReport, 7: renderMade })[currentLevel](); }
 function goToLevel(k) { $("tab-" + k).click(); }
 
 /* =====================================================================
@@ -2007,10 +2121,11 @@ const QUESTIONS = [
   { id: "q5a", level: "5", text: "Look at the network's mistake and its 3,594 numbers. Can you explain why it made the mistake? What would it take to explain a decision made by a system with 175 billion parameters?" },
   { id: "q5b", level: "5", text: "How did the network do on your handwriting compared with its test accuracy? Describe a real situation where a gap like this could harm someone." },
   { id: "q5c", level: "5", text: "Who should pay the environmental costs of training and running large AI models, and who should get to decide whether they're worth it?" },
-  { id: "q5d", level: "5", text: "What question about AI do you want to investigate in your project?" },
+  { id: "q7a", level: "7", text: "Now that you know how this app was made, how do you feel about having used it? Weigh at least one cost against at least one benefit." },
+  { id: "q7b", level: "7", text: "What do you want to look into next about AI? It can be a question this lab raised, something you've read or heard about, or something that worries you. Say what you'd want to find out and where you might start." },
 ];
-const LEVEL_TITLES = { 0: "Start", 1: "Level 1", 2: "Level 2", 3: "Level 3", 4: "Level 4", 5: "Ethics" };
-["0", "1", "2", "3", "4", "5"].forEach((lv) => {
+const LEVEL_TITLES = { 0: "Start", 1: "Level 1", 2: "Level 2", 3: "Level 3", 4: "Level 4", 5: "Ethics", 7: "How this app was made" };
+["0", "1", "2", "3", "4", "5", "7"].forEach((lv) => {
   const qs = QUESTIONS.filter((q) => q.level === lv);
   const panel = document.createElement("div");
   panel.className = "panel qpanel";
@@ -2205,6 +2320,75 @@ $("rep-pdf").onclick = () => {
   try { doc.save(`digit-network-lab-${slug}.pdf`); $("rep-msg").textContent = "PDF downloaded. Upload it to the Canvas assignment."; }
   catch (e) { $("rep-msg").textContent = "The download was blocked. Use \"Copy as text\" instead."; }
 };
+
+/* =====================================================================
+   HOW THIS APP WAS MADE: token log, energy estimate, cost comparison
+   ===================================================================== */
+// Link to the alternative (non-app) assignment. Leave empty until the Google Doc is shared.
+const ALT_ASSIGNMENT_URL = "";
+
+$("go-made").onclick = () => goToLevel("7");
+
+// Opus 5.5 API prices, dollars per million tokens (cache writes use the 1-hour cache)
+const PRICE = { input: 4, output: 20, cacheWrite: 8, cacheRead: 0.2 };
+// Energy per million tokens (Couch 2026); re-read tokens cost a fraction of fresh input (Hausfather 2026).
+// The low case scales everything down 4x (Joule 2026: public estimates run above measured serving).
+const WH_PER_M = { input: 390, output: 1950, cacheWrite: 490 };
+const SCENARIOS = {
+  low: { k: 0.25, reread: 0.01, water: 0.3, co2: 0.10 },
+  central: { k: 1, reread: 0.10, water: 2.5, co2: 0.34 },
+  high: { k: 1, reread: 0.25, water: 5.0, co2: 0.45 },
+};
+function footprint(t, sc) {
+  const c = SCENARIOS[sc];
+  const wh = (t.input * WH_PER_M.input + t.output * WH_PER_M.output + t.cacheWrite * WH_PER_M.cacheWrite
+    + t.cacheRead * WH_PER_M.input * c.reread) * c.k / 1e6;
+  const kwh = wh / 1000;
+  return { kwh, liters: kwh * c.water, kg: kwh * c.co2 };
+}
+const sig2 = (n) => (n >= 100 ? fmt(Math.round(n)) : n >= 10 ? n.toFixed(0) : n >= 1 ? n.toFixed(1) : n.toFixed(2));
+const millions = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + " million" : fmt(n));
+
+function renderMade() {
+  const log = window.BUILD_LOG || [];
+  if (!log.length) return;
+  const t = log.at(-1).tokens, total = t.input + t.output + t.cacheWrite + t.cacheRead;
+  $("mk-total").textContent = millions(total);
+  $("mk-out").textContent = millions(t.output);
+  $("mk-reread").textContent = millions(t.cacheRead);
+  const dollars = (t.input * PRICE.input + t.output * PRICE.output + t.cacheWrite * PRICE.cacheWrite + t.cacheRead * PRICE.cacheRead) / 1e6;
+  $("mk-price").textContent = `At Anthropic's published prices for developers, this many tokens would cost about $${dollars.toFixed(2)}. Your teacher actually pays a flat monthly subscription.`;
+
+  $("mk-versions").innerHTML = `<thead><tr><th>Version</th><th>Date</th><th>What changed</th><th style="text-align:right">Tokens so far</th></tr></thead><tbody>` +
+    log.map((v) => { const n = v.tokens.input + v.tokens.output + v.tokens.cacheWrite + v.tokens.cacheRead;
+      return `<tr><td class="num">${v.version}</td><td>${v.date}</td><td>${v.label}</td><td class="num">${fmt(n)}</td></tr>`; }).join("") + "</tbody>";
+
+  const lo = footprint(t, "low"), mid = footprint(t, "central"), hi = footprint(t, "high");
+  $("mk-env").innerHTML = [
+    ["Electricity", sig2(mid.kwh) + " kWh", `${sig2(lo.kwh)} to ${sig2(hi.kwh)} kWh`],
+    ["Water", sig2(mid.liters) + " liters", `${sig2(lo.liters)} to ${sig2(hi.liters)} liters, including water used to generate the electricity`],
+    ["Carbon", sig2(mid.kg) + " kg CO₂", `${sig2(lo.kg)} to ${sig2(hi.kg)} kg`],
+  ].map(([k, v, r]) => `<div class="e"><span class="label">${k} · middle estimate</span><span class="num">${v}</span><span class="rng">Range: ${r}</span></div>`).join("");
+
+  const rows = [
+    ["Driving an electric car", `${sig2(mid.kwh / 0.30)} miles`, "0.30 kWh per mile"],
+    ["Charging a phone", `${fmt(Math.round(mid.kwh / 0.015))} times`, "15 Wh per charge"],
+    ["Streaming video", `${sig2(mid.kwh / 0.077)} hours`, "IEA estimate, including the network"],
+    ["Running a laptop", `${sig2(mid.kwh / 0.03)} hours`, "30 watts"],
+    ["A programmer's laptop for the 180 hours estimated below", `${sig2(180 * 0.03)} kWh`, "for comparison"],
+    ["Water: half-liter water bottles", `${fmt(Math.round(mid.liters / 0.5))} bottles`, "a 10-minute shower uses about 75 liters"],
+    ["Carbon: driving a gas car", `${sig2(mid.kg / 0.40)} miles`, "EPA, 400 g CO₂ per mile"],
+  ];
+  $("mk-compare").innerHTML = `<thead><tr><th>The middle estimate is about as much as…</th><th style="text-align:right">Amount</th><th>Assumes</th></tr></thead><tbody>` +
+    rows.map(([a, b, c]) => `<tr><td>${a}</td><td class="num">${b}</td><td class="note">${c}</td></tr>`).join("") + "</tbody>";
+  $("mk-scale").textContent = `For scale: training GPT-3 used an estimated 1,287,000 kWh, about ${fmt(Math.round(1287000 / mid.kwh / 1000) * 1000)} times the middle estimate for building this app. These estimates leave out the energy used to train Claude itself and to build the computers and data centers it runs on.`;
+
+  $("mk-vs").innerHTML = `Building it with Claude cost about <b>$${dollars.toFixed(0)}</b> at developer prices, plus your teacher's time spent describing, testing, and reviewing it.`;
+
+  $("mk-alt").innerHTML = ALT_ASSIGNMENT_URL
+    ? `<a class="btn solid" href="${ALT_ASSIGNMENT_URL}" target="_blank" rel="noopener">Open the alternative assignment</a>`
+    : `<p class="note">Ask your teacher for the link to the alternative assignment.</p>`;
+}
 
 /* =====================================================================
    Start-up and theme handling
