@@ -45,7 +45,7 @@ const children = [
 
   h1("How it works"),
   p([t("Below are five topics, each with a few sources to start from. "), b("You decide where to go."), t(" Start with whatever interests you. Follow links and references from one source to the next, find your own sources, and skip anything that doesn't hold your attention. You can go deep on one topic or range across several.")]),
-  p([t("Keep a research log as you go (at the end of this document). At the end, you'll present what you found to your teacher, in whatever format suits you.")]),
+  p([t("Keep a research log as you go (at the end of this document). At the end, you'll present what you found to Mr. Hotchkiss, in whatever format suits you.")]),
 
   h1("Starting points"),
 
@@ -78,7 +78,7 @@ const children = [
 
   h2("How AI tools get built, and who pays"),
   p(t("The Digit Network Lab is an example. As of October 8, 2026:")),
-  bullet([t("It was \"vibe coded\": your teacher described what they wanted in plain English, and an AI model, Claude Opus 5.5 by Anthropic, wrote the code and most of the text.")]),
+  bullet([t("It was \"vibe coded\": Mr. Hotchkiss described what he wanted in plain English, and an AI model, Claude Opus 5.5 by Anthropic, wrote the code and most of the text.")]),
   bullet([t("It used about 45 million tokens (chunks of text the AI reads or writes), roughly 2.5 to 3 kWh of electricity by middle estimates (outside estimates range from about 0.3 to 5 kWh), and a little over $20 at Anthropic's prices for developers.")]),
   bullet([t("A skilled programmer would need an estimated 120 to 240 hours to build it, which would cost roughly $7,700 to $36,000.")]),
   bullet([t("The AI learned to code largely from programmers who shared their knowledge for free on forums, in open-source projects, and in tutorials. They weren't asked whether their work could be used this way, and they weren't paid for it.")]),
@@ -86,7 +86,7 @@ const children = [
   source("US Bureau of Labor Statistics, \"Software Developers\"", "https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm"),
 
   h1("Present your findings"),
-  p([t("By the end of the third class, present what you found to your teacher. "), b("You choose the format:"), t(" a written piece, a slide deck, a short recorded talk, a poster or infographic, or a conversation with your teacher (set up a time in advance).")]),
+  p([t("By the end of the third class, present what you found to Mr. Hotchkiss. "), b("You choose the format:"), t(" a written piece, a slide deck, a short recorded talk, a poster or infographic, or a conversation with Mr. Hotchkiss (set up a time in advance).")]),
   p(t("Whatever the format, include:")),
   bullet(t("what you looked into, and why it interested you")),
   bullet(t("what you found out")),

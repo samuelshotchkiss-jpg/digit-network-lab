@@ -39,5 +39,18 @@ window.BUILD_LOG = [
       "cacheWrite": 1423063,
       "cacheRead": 49022056
     }
+  },
+  {
+    "version": 4,
+    "date": "2026-10-08",
+    "label": "Token total only, Mr. Hotchkiss, GitHub Pages setup",
+    "model": "Claude Opus 5.5",
+    "responses": 199,
+    "tokens": {
+      "input": 398,
+      "output": 266079,
+      "cacheWrite": 1434961,
+      "cacheRead": 53148971
+    }
   }
 ];

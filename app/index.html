@@ -956,7 +956,7 @@ footer a { color: inherit; }
   <div class="panel made-panel">
     <div class="stack">
       <h3>Vibe coded with Claude</h3>
-      <p>This app was <span class="term">vibe coded</span>. Your teacher described what they wanted in plain English, and an AI model, <b>Claude Opus 5.5</b>, made by the company Anthropic, wrote all of the code and most of the text. Your teacher tested each version, asked for changes, and decided what stayed in. "Vibe coding" is the common name for building software this way: a person directs, and an AI writes the code.</p>
+      <p>This app was <span class="term">vibe coded</span>. Mr. Hotchkiss described what he wanted in plain English, and an AI model, <b>Claude Opus 5.5</b>, made by the company Anthropic, wrote all of the code and most of the text. He tested each version, asked for changes, and decided what stayed in. "Vibe coding" is the common name for building software this way: a person directs, and an AI writes the code.</p>
       <p>If you use this app, you'll be using an AI-built tool to learn how AI works and to question it. The rest of this page lays out the costs of that choice so you can decide for yourself.</p>
     </div>
     <div class="stack">
@@ -968,13 +968,8 @@ footer a { color: inherit; }
         <div class="stat"><span class="num" id="mk-reread">–</span><span class="label">re-read from earlier</span></div>
       </div>
       <p class="note" id="mk-price"></p>
+      <p class="note">This total comes from the usage records Claude Code keeps for every reply, and it's updated each time a new version of the app is saved. All of the app's code, and its full history, is public on <a href="https://github.com/samuelshotchkiss-jpg/digit-network-lab" target="_blank" rel="noopener">GitHub</a>.</p>
     </div>
-  </div>
-
-  <div class="panel" style="margin-top:14px">
-    <span class="label">Running total, updated with each saved version of the app</span>
-    <div class="tablewrap"><table class="scale" id="mk-versions"></table></div>
-    <p class="note">These counts come from the usage records that Claude Code keeps for every reply. Each time a new version of the app is saved, the total so far is added to this table.</p>
   </div>
 
   <div class="panel" style="margin-top:14px">
@@ -1005,7 +1000,7 @@ footer a { color: inherit; }
     </div>
     <p>That's three to six weeks of full-time work. In May 2024 the median pay for US software developers was $133,080 a year, about $64 an hour. Freelance developers commonly charge $75 to $150 an hour. At those rates the app would cost roughly <b>$7,700 to $36,000</b>, with about <b>$18,000</b> as a middle estimate (180 hours at $100 an hour).</p>
     <p id="mk-vs"></p>
-    <p><b>The economic impact.</b> For this app, no programmer lost this job. A teacher couldn't have paid $18,000 for a classroom tool, so without AI the app wouldn't exist. Many uses of AI are like this: they produce things that would never have been paid for.</p>
+    <p><b>The economic impact.</b> For this app, no programmer lost this job. Mr. Hotchkiss couldn't have paid $18,000 for a classroom tool, so without AI the app wouldn't exist. Many uses of AI are like this: they produce things that would never have been paid for.</p>
     <p>The same price gap applies to companies that would have hired someone. When work that took a person weeks costs a few dollars of computing, some of those jobs disappear or change. A Stanford study of payroll records found that since generative AI spread in late 2022, employment of 22- to 25-year-olds in the jobs most exposed to AI, including software development, has fallen behind employment of older workers in the same jobs.</p>
     <p>The money also goes to different people. Paying a programmer pays a worker. Paying for AI pays a technology company and the companies that build and power its data centers.</p>
   </div>
@@ -1028,7 +1023,7 @@ footer a { color: inherit; }
       </div>
       <div class="stack">
         <span class="label">Don't use the app</span>
-        <p>That's a reasonable choice, and it won't count against you. The alternative assignment covers the same topics through sources made by people. You follow your own interests through them and present what you find to your teacher.</p>
+        <p>That's a reasonable choice, and it won't count against you. The alternative assignment covers the same topics through sources made by people. You follow your own interests through them and present what you find to Mr. Hotchkiss.</p>
         <div class="row" id="mk-alt"></div>
       </div>
     </div>
@@ -2361,11 +2356,7 @@ function renderMade() {
   $("mk-out").textContent = millions(t.output);
   $("mk-reread").textContent = millions(t.cacheRead);
   const dollars = (t.input * PRICE.input + t.output * PRICE.output + t.cacheWrite * PRICE.cacheWrite + t.cacheRead * PRICE.cacheRead) / 1e6;
-  $("mk-price").textContent = `At Anthropic's published prices for developers, this many tokens would cost about $${dollars.toFixed(2)}. Your teacher actually pays a flat monthly subscription.`;
-
-  $("mk-versions").innerHTML = `<thead><tr><th>Version</th><th>Date</th><th>What changed</th><th style="text-align:right">Tokens so far</th></tr></thead><tbody>` +
-    log.map((v) => { const n = v.tokens.input + v.tokens.output + v.tokens.cacheWrite + v.tokens.cacheRead;
-      return `<tr><td class="num">${v.version}</td><td>${v.date}</td><td>${v.label}</td><td class="num">${fmt(n)}</td></tr>`; }).join("") + "</tbody>";
+  $("mk-price").textContent = `At Anthropic's published prices for developers, this many tokens would cost about $${dollars.toFixed(2)}. Mr. Hotchkiss actually pays a flat monthly subscription.`;
 
   const lo = footprint(t, "low"), mid = footprint(t, "central"), hi = footprint(t, "high");
   $("mk-env").innerHTML = [
@@ -2387,11 +2378,11 @@ function renderMade() {
     rows.map(([a, b, c]) => `<tr><td>${a}</td><td class="num">${b}</td><td class="note">${c}</td></tr>`).join("") + "</tbody>";
   $("mk-scale").textContent = `For scale: training GPT-3 used an estimated 1,287,000 kWh, about ${fmt(Math.round(1287000 / mid.kwh / 1000) * 1000)} times the middle estimate for building this app. These estimates leave out the energy used to train Claude itself and to build the computers and data centers it runs on.`;
 
-  $("mk-vs").innerHTML = `Building it with Claude cost about <b>$${dollars.toFixed(0)}</b> at developer prices, plus your teacher's time spent describing, testing, and reviewing it.`;
+  $("mk-vs").innerHTML = `Building it with Claude cost about <b>$${dollars.toFixed(0)}</b> at developer prices, plus Mr. Hotchkiss's time spent describing, testing, and reviewing it.`;
 
   $("mk-alt").innerHTML = ALT_ASSIGNMENT_URL
     ? `<a class="btn solid" href="${ALT_ASSIGNMENT_URL}" target="_blank" rel="noopener">Open the alternative assignment</a>`
-    : `<p class="note">Ask your teacher for the link to the alternative assignment.</p>`;
+    : `<p class="note">Ask Mr. Hotchkiss for the link to the alternative assignment.</p>`;
 }
 
 /* =====================================================================
