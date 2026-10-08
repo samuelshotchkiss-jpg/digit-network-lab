@@ -2324,7 +2324,7 @@ $("rep-pdf").onclick = () => {
    HOW THIS APP WAS MADE: token log, energy estimate, cost comparison
    ===================================================================== */
 // Link to the alternative (non-app) assignment. Leave empty until the Google Doc is shared.
-const ALT_ASSIGNMENT_URL = "";
+const ALT_ASSIGNMENT_URL = "https://docs.google.com/document/d/1Nq_7uJ7t6KtWI_Wv6Q_WJ-jxkfL_lAR-aqHu89dSKT0/copy";
 
 $("begin-lab").onclick = () => { goToLevel("0"); window.scrollTo(0, 0); };
 
@@ -2381,7 +2381,7 @@ function renderMade() {
   $("mk-vs").innerHTML = `Building it with Claude cost about <b>$${dollars.toFixed(0)}</b> at developer prices, plus Mr. Hotchkiss's time spent describing, testing, and reviewing it.`;
 
   $("mk-alt").innerHTML = ALT_ASSIGNMENT_URL
-    ? `<a class="btn solid" href="${ALT_ASSIGNMENT_URL}" target="_blank" rel="noopener">Open the alternative assignment</a>`
+    ? `<a class="btn solid" href="${ALT_ASSIGNMENT_URL}" target="_blank" rel="noopener">Get your copy of the alternative assignment</a><p class="note">Opens in Google Docs and makes a copy for you to work in. Use your school account.</p>`
     : `<p class="note">Ask Mr. Hotchkiss for the link to the alternative assignment.</p>`;
 }
 
