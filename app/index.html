@@ -313,6 +313,8 @@ dl.results dd { margin: 0; font-weight: 700; }
 .env3 .e .rng { font-size: 0.85rem; color: var(--muted); }
 .acknowledgment { border-color: var(--ink); }
 .optout { border-color: var(--good); }
+.choice { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 760px) { .choice { grid-template-columns: 1fr; } }
 @media (max-width: 860px) { .made-panel, .env3 { grid-template-columns: 1fr; } }
 
 /* ---------- Level 4 ---------- */
@@ -381,28 +383,22 @@ footer a { color: inherit; }
     </div>
   </div>
   <nav class="levels" role="tablist" aria-label="Levels">
-    <button role="tab" id="tab-0" aria-selected="true" data-level="0">Start</button>
+    <button role="tab" id="tab-7" aria-selected="true" data-level="7">How this app was made</button>
+    <button role="tab" id="tab-0" aria-selected="false" data-level="0">Start</button>
     <button role="tab" id="tab-1" aria-selected="false" data-level="1">1 · One neuron</button>
     <button role="tab" id="tab-2" aria-selected="false" data-level="2">2 · One layer</button>
     <button role="tab" id="tab-3" aria-selected="false" data-level="3">3 · Hidden layer</button>
     <button role="tab" id="tab-4" aria-selected="false" data-level="4">4 · Full network</button>
     <button role="tab" id="tab-5" aria-selected="false" data-level="5">Ethics</button>
-    <button role="tab" id="tab-7" aria-selected="false" data-level="7">How this app was made</button>
     <button role="tab" id="tab-6" aria-selected="false" data-level="6">Lab report</button>
   </nav>
 </header>
 
 <!-- ======================= START ======================= -->
-<section id="level-0" role="tabpanel" aria-labelledby="tab-0">
+<section id="level-0" role="tabpanel" aria-labelledby="tab-0" hidden>
   <div class="intro">
     <h2>Start here</h2>
     <p>In this lab you'll build a neural network that reads handwritten digits, one piece at a time, and see every number it uses along the way. Then you'll use what you saw to look at ethical problems with much larger AI systems.</p>
-  </div>
-
-  <div class="panel disclosure" style="margin-bottom:14px">
-    <span class="label">Before you begin</span>
-    <p>This app was written by an AI, Claude Opus 5.5, following your teacher's directions. Your teacher tested it and decided what went in. The <b>How this app was made</b> tab explains what that cost in electricity, water, and labor. If you'd rather not use an app made this way, there's an alternative assignment that covers the same material.</p>
-    <div class="row"><button class="btn" id="go-made">Read how this app was made</button></div>
   </div>
 
   <div class="panel" style="margin-bottom:14px">
@@ -414,7 +410,6 @@ footer a { color: inherit; }
       <li><b>Level 3:</b> a hidden layer, trained with backpropagation.</li>
       <li><b>Level 4:</b> the full network from the 3Blue1Brown video.</li>
       <li><b>Ethics:</b> black boxes, training data, and environmental cost.</li>
-      <li><b>How this app was made:</b> what it cost to have an AI build this app.</li>
       <li><b>Lab report:</b> download your answers and results as a PDF for Canvas.</li>
     </ol>
     <p class="note">Each level ends with lab report questions. Your answers are saved in this browser as you type.</p>
@@ -952,17 +947,17 @@ footer a { color: inherit; }
 </section>
 
 <!-- ======================= HOW THIS APP WAS MADE ======================= -->
-<section id="level-7" role="tabpanel" aria-labelledby="tab-7" hidden>
+<section id="level-7" role="tabpanel" aria-labelledby="tab-7">
   <div class="intro">
     <h2>How this app was made</h2>
-    <p>In a class about the ethics of AI, you should know how the tools you use were made. This page explains how this app was built, what it cost, and whose work it depends on. It also gives you a way to opt out.</p>
+    <p>Read this before you use the app. In a class about the ethics of AI, you should know how a tool was made before you decide whether to use it. This page explains how this app was built, what it cost, and whose work it depends on. At the end you can choose to use the app or to do an alternative assignment instead.</p>
   </div>
 
   <div class="panel made-panel">
     <div class="stack">
       <h3>Vibe coded with Claude</h3>
       <p>This app was <span class="term">vibe coded</span>. Your teacher described what they wanted in plain English, and an AI model, <b>Claude Opus 5.5</b>, made by the company Anthropic, wrote all of the code and most of the text. Your teacher tested each version, asked for changes, and decided what stayed in. "Vibe coding" is the common name for building software this way: a person directs, and an AI writes the code.</p>
-      <p>So you are using an AI-built tool to learn how AI works and to question it. The rest of this page lays out the costs of that choice so you can judge it for yourself.</p>
+      <p>If you use this app, you'll be using an AI-built tool to learn how AI works and to question it. The rest of this page lays out the costs of that choice so you can decide for yourself.</p>
     </div>
     <div class="stack">
       <span class="label">The token count</span>
@@ -1024,9 +1019,19 @@ footer a { color: inherit; }
   </div>
 
   <div class="panel optout" style="margin-top:14px">
-    <h3>If you'd rather not use this app</h3>
-    <p>That's a reasonable choice, and it won't count against you. There's an alternative assignment that covers the same material through human-made sources: the 3Blue1Brown videos, Michael Nielsen's book, and the reporting and research cited on the Ethics tab. You'll read, watch, and write instead of using this app.</p>
-    <div class="row" id="mk-alt"></div>
+    <h3>Your choice</h3>
+    <div class="choice">
+      <div class="stack">
+        <span class="label">Use the app</span>
+        <p>Start with where the word "neuron" comes from, then work through the four levels and the Ethics tab. Your answers are saved in this browser as you go.</p>
+        <div class="row"><button class="btn solid" id="begin-lab">Begin the lab</button></div>
+      </div>
+      <div class="stack">
+        <span class="label">Don't use the app</span>
+        <p>That's a reasonable choice, and it won't count against you. The alternative assignment covers the same topics through sources made by people. You follow your own interests through them and present what you find to your teacher.</p>
+        <div class="row" id="mk-alt"></div>
+      </div>
+    </div>
   </div>
 
   <div class="panel" style="margin-top:14px">
@@ -1281,7 +1286,7 @@ class Network {
    Tabs
    ===================================================================== */
 const LEVELS = ["0", "1", "2", "3", "4", "5", "6", "7"];
-let currentLevel = "0";
+let currentLevel = "7";
 document.querySelectorAll("nav.levels button[data-level]").forEach((b) => {
   b.addEventListener("click", () => {
     currentLevel = b.dataset.level;
@@ -2121,11 +2126,10 @@ const QUESTIONS = [
   { id: "q5a", level: "5", text: "Look at the network's mistake and its 3,594 numbers. Can you explain why it made the mistake? What would it take to explain a decision made by a system with 175 billion parameters?" },
   { id: "q5b", level: "5", text: "How did the network do on your handwriting compared with its test accuracy? Describe a real situation where a gap like this could harm someone." },
   { id: "q5c", level: "5", text: "Who should pay the environmental costs of training and running large AI models, and who should get to decide whether they're worth it?" },
-  { id: "q7a", level: "7", text: "Now that you know how this app was made, how do you feel about having used it? Weigh at least one cost against at least one benefit." },
-  { id: "q7b", level: "7", text: "What do you want to look into next about AI? It can be a question this lab raised, something you've read or heard about, or something that worries you. Say what you'd want to find out and where you might start." },
+  { id: "q5d", level: "5", text: "What do you want to look into next about AI? It can be a question this lab raised, something you've read or heard about, or something that worries you. Say what you'd want to find out and where you might start." },
 ];
-const LEVEL_TITLES = { 0: "Start", 1: "Level 1", 2: "Level 2", 3: "Level 3", 4: "Level 4", 5: "Ethics", 7: "How this app was made" };
-["0", "1", "2", "3", "4", "5", "7"].forEach((lv) => {
+const LEVEL_TITLES = { 0: "Start", 1: "Level 1", 2: "Level 2", 3: "Level 3", 4: "Level 4", 5: "Ethics" };
+["0", "1", "2", "3", "4", "5"].forEach((lv) => {
   const qs = QUESTIONS.filter((q) => q.level === lv);
   const panel = document.createElement("div");
   panel.className = "panel qpanel";
@@ -2327,7 +2331,7 @@ $("rep-pdf").onclick = () => {
 // Link to the alternative (non-app) assignment. Leave empty until the Google Doc is shared.
 const ALT_ASSIGNMENT_URL = "";
 
-$("go-made").onclick = () => goToLevel("7");
+$("begin-lab").onclick = () => { goToLevel("0"); window.scrollTo(0, 0); };
 
 // Opus 5.5 API prices, dollars per million tokens (cache writes use the 1-hour cache)
 const PRICE = { input: 4, output: 20, cacheWrite: 8, cacheRead: 0.2 };
@@ -2409,6 +2413,7 @@ if (STORE.results.l2 && STORE.results.l2.length) {
 reset4();
 renderL1();
 renderN0();
+renderMade();
 </script>
 </body>
 </html>
